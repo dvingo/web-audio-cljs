@@ -1,13 +1,10 @@
 (ns ^:figwheel-always web-audio-cljs.core
     (:require[om.core :as om :include-macros true]
-              [om.dom :as dom :include-macros true]))
+              [om.dom :as dom :include-macros true]
+              [web-audio-cljs.audio :as audio]
+              ))
 
 (enable-console-print!)
-
-(println "Edits to this text should show up in your developer console.")
-
-;; define your app data so that it doesn't get over-written on reload
-
 (defonce app-state (atom {:text "Hello world!"}))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -29,9 +26,11 @@
 
 (om/root
   (fn [data owner]
-    (reify om/IRender
+    (reify
+      om/IRender
       (render [_]
         (dom/div nil
-                 (om/build audio-view data)))))
+                 (om/build audio-view data)
+                 (dom/h1 nil "HEREEE")))))
   app-state
   {:target (. js/document (getElementById "app"))})

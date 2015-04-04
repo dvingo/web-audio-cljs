@@ -17,7 +17,7 @@
   :source-paths ["src"]
 
   :clean-targets ^{:protect false} ["resources/public/js/compiled"]
-  
+
   :cljsbuild {
     :builds [{:id "dev"
               :source-paths ["src" "dev_src"]
@@ -25,6 +25,7 @@
                          :output-dir "resources/public/js/compiled/out"
                          :optimizations :none
                          :main web-audio-cljs.dev
+                         :externs ["resources/public/js/recorder.js" "resources/public/js/recorderWorker.js"]
                          :asset-path "js/compiled/out"
                          :source-map true
                          :source-map-timestamp true
@@ -32,12 +33,12 @@
              {:id "min"
               :source-paths ["src"]
               :compiler {:output-to "resources/public/js/compiled/web_audio_cljs.js"
-                         :main web-audio-cljs.core                         
+                         :main web-audio-cljs.core
                          :optimizations :advanced
                          :pretty-print false}}]}
 
   :figwheel {
-             :http-server-root "public" ;; default and assumes "resources" 
+             :http-server-root "public" ;; default and assumes "resources"
              :server-port 3449 ;; default
              :css-dirs ["resources/public/css"] ;; watch and update CSS
 
@@ -63,5 +64,5 @@
              ;; :repl false
 
              ;; to configure a different figwheel logfile path
-             ;; :server-logfile "tmp/logs/figwheel-logfile.log" 
+             ;; :server-logfile "tmp/logs/figwheel-logfile.log"
              })

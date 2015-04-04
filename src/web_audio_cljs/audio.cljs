@@ -2,7 +2,6 @@
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [clojure.string :as string]))
-
 ;;
 ;; Determine which browser audio context to use.
 ;;
@@ -17,8 +16,7 @@
 (defn l [& args] (.log js/console " " (string/join args)))
 
 (l "audio context: " audio-context)
-(declare n analyser-node)
-(set! n 0)
+(declare n analyser-node audio-recorder)
 (def canvas (.getElementById js/document "display"))
 (def canvas-context (.getContext canvas "2d"))
 (def canvas-width (.-width canvas))
@@ -26,34 +24,28 @@
 (def spacing 3)
 (def bar-width 1)
 (def num-bars (.round js/Math (/ canvas-width spacing)))
-(l "canvas width: " canvas-width)
-(l "canvas height: " canvas-height)
+(l "num-bars: " num-bars)
+
+(.clearRect canvas-context 0 0 canvas-width canvas-height)
+(set! (.-fillStyle canvas-context) "#000000")
+(.fillRect canvas-context 0 0 canvas-width canvas-height)
 
 (defn log-data []
   (let [Uint8Array (.-Uint8Array js/window)
         freq-bin-count (.-frequencyBinCount analyser-node)
-        freq-byte-data  (Uint8Array. freq-bin-count)]
-    (l "called log-data")
-    (set! n (inc n))
-    (l "freq-byte-data: " freq-byte-data)
+        freq-byte-data  (Uint8Array. freq-bin-count)
+        multiplier (/ (.-frequencyBinCount analyser-node) num-bars)]
     (.getByteFrequencyData analyser-node freq-byte-data)
     (.clearRect canvas-context 0 0 canvas-width canvas-height)
     (set! (.-fillStyle canvas-context) "#F6D565")
     (set! (.-lineCap canvas-context) "round")
-    (let [multiplier (/ (.-frequencyBinCount analyser-node) num-bars)]
-      (l "multipler: " multiplier)
-      (doseq [i (range num-bars)]
-        (let [offset (.floor js/Math (* i multiplier))
-              magnitude (/ (reduce #(+ (aget freq-byte-data %2) %1) (range multiplier))
-                           multiplier)
-              magnitude2 (aget freq-byte-data (* i multiplier))]
-          (set! (.-fillStyle canvas-context) (str "hsl( " (.round js/Math (/ (* i 360) num-bars)) ", 100%, 50%)"))
-          (.fillRect canvas-context (* i spacing) canvas-height bar-width (- magnitude))
-          ;(prn "i: " i)
-          ;(prn "magnitude: " magnitude)
-          ))
-      )
-    (l "GOT DATA: " (aget freq-byte-data 0)))
+    (doseq [i (range num-bars)]
+      (let [offset (.floor js/Math (* i multiplier))
+            magnitude (/ (reduce #(+ (aget freq-byte-data (+ offset %2)) %1) (range multiplier))
+                         multiplier)]
+        (set! (.-fillStyle canvas-context)
+              (str "hsl(" (string/join "," [(.round js/Math (/ (* i 360) num-bars)) "100%" "50%"]) ")"))
+        (.fillRect canvas-context (* i spacing) canvas-height bar-width (- magnitude)))))
     ;(if (< n 100) (.requestAnimationFrame js/window log-data)))
     (.requestAnimationFrame js/window log-data))
 
@@ -65,12 +57,11 @@
     (set! analyser-node (.createAnalyser audio-context))
     (set! (.-fftSize analyser-node) 2048)
     (.connect input-point analyser-node)
-    (def audio-recorder (js/Recorder. input-point))
+    (set! audio-recorder (js/Recorder. input-point))
     (let [zero-gain (.createGain audio-context)]
       (set! (-> zero-gain .-gain .-value) 0.0)
       (.connect input-point zero-gain)
       (.connect zero-gain  (.-destination audio-context)))
-
     (l "freq bin count: " (.-frequencyBinCount analyser-node))
     (log-data)))
 
@@ -99,28 +90,6 @@
                              "googHighpassFilter"   "false"}
                             "optional" []}})]
   (.getUserMedia js/navigator audio-constraints got-stream #(.log js/console "ERROR getting user media")))
-;(declare audio-recorder)
-
-;(defn got-buffers [buffers]
- ;(let [canvas (. js/document (getElementById "wavedisaply"))]
-   ;(draw-buffer (.width canvas) (.height canvas)
-                ;(.getContext canvas "2d" (first buffers)))
-   ;(.exportWAV audioRecorder)))
-
-;(defn draw-buffer
-  ;[width height context data]
-  ;(let [step (.ceil js/Math
-                    ;(/ (.length data)
-                       ;width))
-        ;amp (/ height 2)]
-    ;(set! (.fillStyle context) "silver")
-    ;(.log js/console "Got data: " data)))
-
-;(defn init-audio []
-  ;(cond (nil? (.getUserMedia navigator))
-        ;(se)))
-
-
 
 ;function initAudio() {
         ;if (!navigator.getUserMedia)

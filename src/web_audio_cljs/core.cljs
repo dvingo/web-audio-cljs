@@ -7,11 +7,6 @@
 (enable-console-print!)
 (defonce app-state (atom {:text "Hello world!"}))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;  Audio Functions                                                           ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
 (defn audio-view [data cursor]
   (reify
     om/IDisplayName (display-name [_] "audio-view")

@@ -36,7 +36,9 @@
         freq-byte-data  (Uint8Array. freq-bin-count)
         multiplier (/ (.-frequencyBinCount analyser-node) num-bars)]
     (.getByteFrequencyData analyser-node freq-byte-data)
-    (.clearRect canvas-context 0 0 canvas-width canvas-height)
+    ;(.clearRect canvas-context 0 0 canvas-width canvas-height)
+    (set! (.-fillStyle canvas-context) "#000000")
+    (.fillRect canvas-context 0 0 canvas-width canvas-height)
     (set! (.-fillStyle canvas-context) "#F6D565")
     (set! (.-lineCap canvas-context) "round")
     (doseq [i (range num-bars)]

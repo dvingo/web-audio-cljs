@@ -8,3 +8,7 @@ The repository was created using the following template:
 ```bash
 lein new figwheel <project-name> -- --om
 ```
+
+```
+rlwrap lein figwheel
+```

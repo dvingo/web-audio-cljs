@@ -17,25 +17,52 @@
 (defn l [& args] (.log js/console " " (string/join args)))
 
 (l "audio context: " audio-context)
-(declare analyser-node)
+(declare n analyser-node)
+(set! n 0)
+(def canvas (.getElementById js/document "display"))
+(def canvas-context (.getContext canvas "2d"))
+(def canvas-width (.-width canvas))
+(def canvas-height (.-height canvas))
+(def spacing 3)
+(def bar-width 1)
+(def num-bars (.round js/Math (/ canvas-width spacing)))
+(l "canvas width: " canvas-width)
+(l "canvas height: " canvas-height)
 
 (defn log-data []
   (let [Uint8Array (.-Uint8Array js/window)
         freq-bin-count (.-frequencyBinCount analyser-node)
         freq-byte-data  (Uint8Array. freq-bin-count)]
     (l "called log-data")
+    (set! n (inc n))
     (l "freq-byte-data: " freq-byte-data)
     (.getByteFrequencyData analyser-node freq-byte-data)
-    (l "GOT DATA: " (aget freq-byte-data 0)
-    (.requestAnimationFrame js/window log-data)
-       )))
+    (.clearRect canvas-context 0 0 canvas-width canvas-height)
+    (set! (.-fillStyle canvas-context) "#F6D565")
+    (set! (.-lineCap canvas-context) "round")
+    (let [multiplier (/ (.-frequencyBinCount analyser-node) num-bars)]
+      (l "multipler: " multiplier)
+      (doseq [i (range num-bars)]
+        (let [offset (.floor js/Math (* i multiplier))
+              magnitude (/ (reduce #(+ (aget freq-byte-data %2) %1) (range multiplier))
+                           multiplier)
+              magnitude2 (aget freq-byte-data (* i multiplier))]
+          (set! (.-fillStyle canvas-context) (str "hsl( " (.round js/Math (/ (* i 360) num-bars)) ", 100%, 50%)"))
+          (.fillRect canvas-context (* i spacing) canvas-height bar-width (- magnitude))
+          ;(prn "i: " i)
+          ;(prn "magnitude: " magnitude)
+          ))
+      )
+    (l "GOT DATA: " (aget freq-byte-data 0)))
+    ;(if (< n 100) (.requestAnimationFrame js/window log-data)))
+    (.requestAnimationFrame js/window log-data))
 
 (defn got-stream [stream]
   (l "got hte stream: " stream)
   (let [input-point (.createGain audio-context)
         audio-input (.createMediaStreamSource audio-context stream)]
     (.connect audio-input input-point)
-    (def analyser-node (.createAnalyser audio-context))
+    (set! analyser-node (.createAnalyser audio-context))
     (set! (.-fftSize analyser-node) 2048)
     (.connect input-point analyser-node)
     (def audio-recorder (js/Recorder. input-point))
@@ -47,34 +74,31 @@
     (l "freq bin count: " (.-frequencyBinCount analyser-node))
     (log-data)))
 
+(when-not (.-getUserMedia js/navigator)
+  (set! (.-getUserMedia js/navigator)
+        (first (filter #(not (nil? %))
+                       [(.-webkitGetUserMedia js/navigator)
+                        (.-mozGetUserMedia js/navigator)]))))
 
-(defn init-audio []
-  (when-not (.-getUserMedia js/navigator)
-    (set! (.-getUserMedia js/navigator)
-          (first (filter #(not (nil? %))
-                         [(.-webkitGetUserMedia js/navigator)
-                          (.-mozGetUserMedia js/navigator)]))))
-  (when-not (.-cancelAnimationFrame js/window)
-    (set! (.-cancelAnimationFrame js/window)
-          (first (filter #(not (nil? %))
-                         [(.-webkitCancelAnimationFrame  js/window)
-                          (.-mozCancelAnimationFrame js/window)]))))
-  (when-not (.-requestAnimationFrame js/window)
-    (set! (.-requestAnimationFrame js/window)
-          (first (filter #(not (nil? %))
-                         [(.-webkitRequestAnimationFrame  js/window)
-                          (.-mozRequestAnimationFrame js/window)]))))
-  (let [audio-constraints (clj->js
-                            {"audio"
-                             {"mandatory"
-                              {"googEchoCancellation" "false"
-                               "googAutoGainControl"  "false"
-                               "googNoiseSuppression" "false"
-                               "googHighpassFilter"   "false"}
-                              "optional" []}})]
-    (.getUserMedia js/navigator audio-constraints got-stream #(.log js/console "ERROR getting user media")))
-  )
-(init-audio)
+(when-not (.-cancelAnimationFrame js/window)
+  (set! (.-cancelAnimationFrame js/window)
+        (first (filter #(not (nil? %))
+                       [(.-webkitCancelAnimationFrame js/window)
+                        (.-mozCancelAnimationFrame js/window)]))))
+(when-not (.-requestAnimationFrame js/window)
+  (set! (.-requestAnimationFrame js/window)
+        (first (filter #(not (nil? %))
+                       [(.-webkitRequestAnimationFrame js/window)
+                        (.-mozRequestAnimationFrame js/window)]))))
+(let [audio-constraints (clj->js
+                          {"audio"
+                           {"mandatory"
+                            {"googEchoCancellation" "false"
+                             "googAutoGainControl"  "false"
+                             "googNoiseSuppression" "false"
+                             "googHighpassFilter"   "false"}
+                            "optional" []}})]
+  (.getUserMedia js/navigator audio-constraints got-stream #(.log js/console "ERROR getting user media")))
 ;(declare audio-recorder)
 
 ;(defn got-buffers [buffers]
@@ -176,16 +200,6 @@
 ;;     }
 ;; }
 ;;
-;; function convertToMono( input ) {
-;;     var splitter = audioContext.createChannelSplitter(2);
-;;     var merger = audioContext.createChannelMerger(2);
-;;
-;;     input.connect( splitter );
-;;     splitter.connect( merger, 0, 0 );
-;;     splitter.connect( merger, 0, 1 );
-;;     return merger;
-;; }
-;;
 ;; function cancelAnalyserUpdates() {
 ;;     window.cancelAnimationFrame( rafID );
 ;;     rafID = null;
@@ -230,65 +244,3 @@
 ;;     rafID = window.requestAnimationFrame( updateAnalysers );
 ;; }
 ;;
-;; function toggleMono() {
-;;     if (audioInput != realAudioInput) {
-;;         audioInput.disconnect();
-;;         realAudioInput.disconnect();
-;;         audioInput = realAudioInput;
-;;     } else {
-;;         realAudioInput.disconnect();
-;;         audioInput = convertToMono( realAudioInput );
-;;     }
-;;
-;;     audioInput.connect(inputPoint);
-;; }
-;;
-;; function gotStream(stream) {
-;;     inputPoint = audioContext.createGain();
-;;
-;;     // Create an AudioNode from the stream.
-;;     realAudioInput = audioContext.createMediaStreamSource(stream);
-;;     audioInput = realAudioInput;
-;;     audioInput.connect(inputPoint);
-;;
-;; //    audioInput = convertToMono( input );
-;;
-;;     analyserNode = audioContext.createAnalyser();
-;;     analyserNode.fftSize = 2048;
-;;     inputPoint.connect( analyserNode );
-;;
-;;     audioRecorder = new Recorder( inputPoint );
-;;
-;;     zeroGain = audioContext.createGain();
-;;     zeroGain.gain.value = 0.0;
-;;     inputPoint.connect( zeroGain );
-;;     zeroGain.connect( audioContext.destination );
-;;     updateAnalysers();
-;; }
-;;
-;; function initAudio() {
-;;         if (!navigator.getUserMedia)
-;;             navigator.getUserMedia = navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
-;;         if (!navigator.cancelAnimationFrame)
-;;             navigator.cancelAnimationFrame = navigator.webkitCancelAnimationFrame || navigator.mozCancelAnimationFrame;
-;;         if (!navigator.requestAnimationFrame)
-;;             navigator.requestAnimationFrame = navigator.webkitRequestAnimationFrame || navigator.mozRequestAnimationFrame;
-;;
-;;     navigator.getUserMedia(
-;;         {
-;;             "audio": {
-;;                 "mandatory": {
-;;                     "googEchoCancellation": "false",
-;;                     "googAutoGainControl": "false",
-;;                     "googNoiseSuppression": "false",
-;;                     "googHighpassFilter": "false"
-;;                 },
-;;                 "optional": []
-;;             },
-;;         }, gotStream, function(e) {
-;;             alert('Error getting audio');
-;;             console.log(e);
-;;         });
-;; }
-;;
-;; window.addEventListener('load', initAudio );

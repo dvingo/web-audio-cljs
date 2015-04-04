@@ -17,22 +17,35 @@
 (defn l [& args] (.log js/console " " (string/join args)))
 
 (l "audio context: " audio-context)
+(declare analyser-node)
+
+(defn log-data []
+  (let [Uint8Array (.-Uint8Array js/window)
+        freq-bin-count (.-frequencyBinCount analyser-node)
+        freq-byte-data  (Uint8Array. freq-bin-count)]
+    (l "called log-data")
+    (l "freq-byte-data: " freq-byte-data)
+    (.getByteFrequencyData analyser-node freq-byte-data)
+    (l "GOT DATA: " (aget freq-byte-data 0)
+    (.requestAnimationFrame js/window log-data)
+       )))
 
 (defn got-stream [stream]
   (l "got hte stream: " stream)
   (let [input-point (.createGain audio-context)
         audio-input (.createMediaStreamSource audio-context stream)]
     (.connect audio-input input-point)
-    (let [analyser-node (.createAnalyser audio-context)]
-      (set! (.-fftSize analyser-node) 2048)
-      (.connect input-point analyser-node))
+    (def analyser-node (.createAnalyser audio-context))
+    (set! (.-fftSize analyser-node) 2048)
+    (.connect input-point analyser-node)
     (def audio-recorder (js/Recorder. input-point))
     (let [zero-gain (.createGain audio-context)]
       (set! (-> zero-gain .-gain .-value) 0.0)
       (.connect input-point zero-gain)
-      (.connect zero-gain  (.-destination audio-context))
-    (l "Would coll update analysers here"))))
-    ;(updateAnalysers)))
+      (.connect zero-gain  (.-destination audio-context)))
+
+    (l "freq bin count: " (.-frequencyBinCount analyser-node))
+    (log-data)))
 
 
 (defn init-audio []

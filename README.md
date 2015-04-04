@@ -9,6 +9,7 @@ The repository was created using the following template:
 lein new figwheel <project-name> -- --om
 ```
 
+To build and run the project:
 ```
 rlwrap lein figwheel
 ```

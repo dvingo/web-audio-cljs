@@ -2,8 +2,7 @@
     (:require[om.core :as om :include-macros true]
               [om.dom :as dom :include-macros true]
               [web-audio-cljs.audio :as audio]
-              [web-audio-cljs.utils :refer [l]]
-              ))
+              [web-audio-cljs.utils :refer [l]]))
 
 (enable-console-print!)
 (defonce AudioContext (.-AudioContext js/window))
@@ -20,9 +19,7 @@
     (render [_]
       (dom/div nil
         (dom/h1 nil "HEllo")
-        (dom/button #js { :onClick (fn [e]
-                                     (.log js/console "CLICK"))
-                         }
+        (dom/button #js {:onClick (fn [e] (.log js/console "CLICK"))}
                     "Button")))))
 
 (defn mount-om-root []
@@ -39,7 +36,6 @@
     {:target (. js/document (getElementById "app"))}))
 
 (defn got-stream [stream]
-  (l "got the stream: " stream)
   (let [audio-context (:audio-context @app-state)
         input-point (.createGain audio-context)
         audio-input (.createMediaStreamSource audio-context stream)]

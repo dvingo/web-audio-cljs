@@ -18,7 +18,6 @@
 (set-prop-if-undefined! "requestAnimationFrame" js/window
                         ["webkitRequestAnimationFrame" "mozRequestAnimationFrame"])
 
-
 (def canvas (.getElementById js/document "display"))
 (def canvas-context (.getContext canvas "2d"))
 (def canvas-width (.-width canvas))
@@ -39,34 +38,30 @@
         (str "hsl(" (string/join "," [(.round js/Math (/ (* i 360) num-bars)) "100%" "50%"]) ")"))
   (.fillRect canvas-context (* i spacing) canvas-height bar-width (- magnitude)))
 
+(defn get-audio-data [analyser-node num-bars]
+  (let [Uint8Array (.-Uint8Array js/window)
+        freq-bin-count (.-frequencyBinCount analyser-node)]
+    {:freq-byte-data (Uint8Array. freq-bin-count)
+     :multiplier (/ (.-frequencyBinCount analyser-node) num-bars)}))
+
 (defn chart-view [{:keys [analyser-node] :as data} owner]
   (reify
     om/IDisplayName (display-name [_] "chart")
 
     om/IInitState
     (init-state [_]
-      (let [Uint8Array (.-Uint8Array js/window)
-            freq-bin-count (.-frequencyBinCount analyser-node)
-            freq-byte-data (Uint8Array. freq-bin-count)
-            multiplier (/ (.-frequencyBinCount analyser-node) num-bars)]
-        {:freq-byte-data freq-byte-data
-         :multiplier multiplier}))
+      (let [{:keys [freq-byte-data multiplier]} (get-audio-data analyser-node num-bars)]
+        {:freq-byte-data freq-byte-data :multiplier multiplier}))
 
     om/IDidMount
     (did-mount [_]
-      (let [Uint8Array (.-Uint8Array js/window)
-            freq-bin-count (.-frequencyBinCount analyser-node)
-            freq-byte-data (Uint8Array. freq-bin-count)
-            multiplier (/ (.-frequencyBinCount analyser-node) num-bars)]
-        (om/set-state! owner { :freq-byte-data freq-byte-data :multiplier multiplier})))
+      (let [{:keys [freq-byte-data multiplier]} (get-audio-data analyser-node num-bars)]
+        (om/set-state! owner {:freq-byte-data freq-byte-data :multiplier multiplier})))
 
     om/IDidUpdate
     (did-update [_ prev-props prev-state]
-      (let [Uint8Array (.-Uint8Array js/window)
-            freq-bin-count (.-frequencyBinCount analyser-node)
-            freq-byte-data (Uint8Array. freq-bin-count)
-            multiplier (/ (.-frequencyBinCount analyser-node) num-bars)]
-        (om/set-state! owner { :freq-byte-data freq-byte-data :multiplier multiplier})))
+      (let [{:keys [freq-byte-data multiplier]} (get-audio-data analyser-node num-bars)]
+        (om/set-state! owner {:freq-byte-data freq-byte-data :multiplier multiplier})))
 
     om/IRenderState
     (render-state [_ {:keys [freq-byte-data multiplier]}]

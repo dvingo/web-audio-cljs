@@ -5,8 +5,7 @@
               [web-audio-cljs.utils :refer [l]]))
 
 (enable-console-print!)
-(defonce AudioContext (.-AudioContext js/window))
-(defonce audio-context (AudioContext.))
+(defonce audio-context (js/window.AudioContext.))
 (defonce app-state (atom {:text "Hello world!"
                           :analyser-node nil
                           :audio-recorder nil
@@ -19,7 +18,22 @@
     (render [_]
       (dom/div nil
         (dom/h1 nil "HEllo")
-        (dom/button #js {:onClick (fn [e] (.log js/console "CLICK"))}
+        (dom/button #js {:onClick (fn [e]
+                                    (.log js/console "CLICK")
+                                    (.log js/console "audio recorder: " (:audio-recorder data))
+                                    (let [rec (:audio-recorder data)]
+                                      (.record rec)
+                                      (.setTimeout js/window (fn []
+                                                               (.stop rec)
+                                                               (.log js/console "HERE IN EXPROT")
+                                                               (.exportWAV rec (fn [e]
+                                                                                 (.log js/console "GOT RECORDING: " e)
+                                                                                 (.clear rec)
+                                                                                 (.setupDownload js/Recorder e "templ.wav")
+                                                                                 )))
+                                                               4000)
+                                      )
+                                    )}
                     "Button")))))
 
 (defn mount-om-root []

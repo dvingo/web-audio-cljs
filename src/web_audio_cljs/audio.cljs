@@ -18,22 +18,14 @@
 (set-prop-if-undefined! "requestAnimationFrame" js/window
                         ["webkitRequestAnimationFrame" "mozRequestAnimationFrame"])
 
-(def canvas (.getElementById js/document "display"))
-(def canvas-context (.getContext canvas "2d"))
-(def canvas-width (.-width canvas))
-(def canvas-height (.-height canvas))
-(def spacing 3)
-(def bar-width 1)
-(def num-bars (.round js/Math (/ canvas-width spacing)))
-
-(defn clear-canvas! [canvas-context]
+(defn clear-canvas! [canvas-context canvas-width canvas-height]
   (set! (.-fillStyle canvas-context) "#000000")
   (.fillRect canvas-context 0 0 canvas-width canvas-height)
   (set! (.-fillStyle canvas-context) "#F6D565")
   (set! (.-lineCap canvas-context) "round"))
 
 (defn draw-line-on-canvas!
-  [canvas-context i spacing num-bars bar-width magnitude]
+  [canvas-context canvas-height i spacing num-bars bar-width magnitude]
   (set! (.-fillStyle canvas-context)
         (str "hsl(" (string/join "," [(.round js/Math (/ (* i 360) num-bars)) "100%" "50%"]) ")"))
   (.fillRect canvas-context (* i spacing) canvas-height bar-width (- magnitude)))
@@ -44,31 +36,58 @@
     {:freq-byte-data (Uint8Array. freq-bin-count)
      :multiplier (/ (.-frequencyBinCount analyser-node) num-bars)}))
 
+(defn draw-bars!
+  [canvas-context canvas-width canvas-height spacing num-bars multiplier freq-byte-data bar-width]
+  (clear-canvas! canvas-context canvas-width canvas-height)
+  (doseq [i (range num-bars)]
+    (let [offset (.floor js/Math (* i multiplier))
+          magnitude (/ (reduce #(+ (aget freq-byte-data (+ offset %2)) %1) (range multiplier))
+                       multiplier)]
+      (draw-line-on-canvas! canvas-context canvas-height i spacing num-bars bar-width magnitude))))
+
 (defn chart-view [{:keys [analyser-node] :as data} owner]
   (reify
     om/IDisplayName (display-name [_] "chart")
 
     om/IInitState
     (init-state [_]
-      (let [{:keys [freq-byte-data multiplier]} (get-audio-data analyser-node num-bars)]
-        {:freq-byte-data freq-byte-data :multiplier multiplier}))
+        {:canvas nil
+         :canvas-context nil
+         :canvas-width nil
+         :canvas-height nil
+         :spacing 3
+         :bar-width 1
+         :num-bars nil
+         :freq-byte-data nil
+         :multiplier nil})
 
     om/IDidMount
     (did-mount [_]
-      (let [{:keys [freq-byte-data multiplier]} (get-audio-data analyser-node num-bars)]
-        (om/set-state! owner {:freq-byte-data freq-byte-data :multiplier multiplier})))
+      (let [{:keys [spacing]} (om/get-state owner)
+            canvas (.getElementById js/document "display")
+            canvas-context (.getContext canvas "2d")
+            canvas-width (.-width canvas)
+            canvas-height (.-height canvas)
+            num-bars (.round js/Math (/ canvas-width spacing))
+            {:keys [freq-byte-data multiplier]} (get-audio-data analyser-node num-bars)]
+        (om/update-state! owner #(assoc %
+                                        :canvas canvas
+                                        :canvas-context canvas-context
+                                        :canvas-width canvas-width
+                                        :canvas-height canvas-height
+                                        :num-bars num-bars
+                                        :freq-byte-data freq-byte-data
+                                        :multiplier multiplier))))
 
     om/IDidUpdate
     (did-update [_ prev-props prev-state]
-      (let [{:keys [freq-byte-data multiplier]} (get-audio-data analyser-node num-bars)]
-        (om/set-state! owner {:freq-byte-data freq-byte-data :multiplier multiplier})))
+      (let [{:keys [canvas-context canvas-width canvas-height num-bars spacing bar-width]} (om/get-state owner)
+            {:keys [freq-byte-data multiplier]} (get-audio-data analyser-node num-bars)]
+        (.getByteFrequencyData analyser-node freq-byte-data)
+        (when canvas-context
+          (draw-bars! canvas-context canvas-width canvas-height spacing
+                      num-bars multiplier freq-byte-data bar-width))
+        (om/update-state! owner #(assoc % :freq-byte-data freq-byte-data :multiplier multiplier))))
 
-    om/IRenderState
-    (render-state [_ {:keys [freq-byte-data multiplier]}]
-      (.getByteFrequencyData analyser-node freq-byte-data)
-      (clear-canvas! canvas-context)
-      (doseq [i (range num-bars)]
-        (let [offset (.floor js/Math (* i multiplier))
-              magnitude (/ (reduce #(+ (aget freq-byte-data (+ offset %2)) %1) (range multiplier))
-                           multiplier)]
-          (draw-line-on-canvas! canvas-context i spacing num-bars bar-width magnitude))))))
+    om/IRender
+    (render [_] nil)))

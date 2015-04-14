@@ -11,6 +11,54 @@
                           :audio-recorder nil
                           :audio-context audio-context}))
 
+
+;(comment
+;function drawBuffer( width, height, context, data ) {
+    ;var step = Math.ceil( data.length / width );
+    ;var amp = height / 2;
+    ;context.fillStyle = "silver";
+    ;context.clearRect(0,0,width,height);
+    ;for(var i=0; i < width; i++){
+        ;var min = 1.0;
+        ;var max = -1.0;
+        ;for (j=0; j<step; j++) {
+            ;var datum = data[(i*step)+j];
+            ;if (datum < min)
+                ;min = datum;
+            ;if (datum > max)
+                ;max = datum;
+        ;}
+        ;context.fillRect(
+            ;i,
+            ;(1 + min) * amp,
+            ;1,
+            ;Math.max(1, (max - min) * amp));
+    ;}
+;}
+;)
+
+(defn draw-buffer! [width height canvas-context data]
+  (let [step (.ceil js/Math (/ (.-length data) width))
+        amp (/ height 2)]
+    (aset canvas-context "fillStyle" "silver")
+    (.clearRect canvas-context 0 0 width height)
+    (.log js/console "amplitude" amp)
+    (.log js/console "data length " (.-length data))
+    (.log js/console "step " step)
+    (.log js/console "width " width)
+    (doseq [i (range width)]
+      (doseq [j (range step)]
+        (let [datum (aget data (+ (* i step) j))]
+          (.fillRect canvas-context i amp 1 (- (.max js/Math 1 (* datum amp)))))))))
+
+(defn play-sound [context sound-data]
+  (let [audio-tag (.getElementById js/document "play-sound")]
+    ;source (.createMediaElementSource context audio-tag)]
+    (aset audio-tag "src" (.createObjectURL js/window.URL sound-data))
+    ;(.connect source (.-destination context))
+    ))
+
+
 (defn audio-view [data cursor]
   (reify
     om/IDisplayName (display-name [_] "audio-view")
@@ -26,11 +74,22 @@
                                       (.setTimeout js/window (fn []
                                                                (.stop rec)
                                                                (.log js/console "HERE IN EXPROT")
-                                                               (.exportWAV rec (fn [e]
-                                                                                 (.log js/console "GOT RECORDING: " e)
-                                                                                 (.clear rec)
-                                                                                 (.setupDownload js/Recorder e "templ.wav")
-                                                                                 )))
+                                                               (.getBuffers rec (fn [buffers]
+                                                                                 (.log js/console "GOT BUFFERS" buffers)
+                                                                                  (let [canvas (.getElementById js/document "buffer-display")
+                                                                                  canvas-context (.getContext canvas "2d")
+                                                                                  canvas-width (.-width canvas)
+                                                                                  canvas-height (.-height canvas)]
+                                                                                  (draw-buffer! canvas-width canvas-height canvas-context (aget buffers 0)))
+                                                                                 (.exportWAV rec (fn [blob]
+                                                                                                   (let [context (:audio-context data)
+                                                                                                         buffer (aget buffers 0)]
+                                                                                                   (play-sound context blob)
+                                                                                                   (.log js/console "GOT RECORDING: " blob)
+                                                                                                   (.clear rec)
+                                                                                                   (.setupDownload js/Recorder blob "templ.wav"))
+                                                                                                   ))
+                                                                                  )))
                                                                4000)
                                       )
                                     )}

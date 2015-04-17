@@ -13,3 +13,17 @@ To build and run the project:
 ```
 rlwrap lein figwheel
 ```
+
+# Licensing
+
+## Icons
+
+This project uses the following images:
+
+A record image by Juan Pablo Bravo
+- https://thenounproject.com/bravo/
+- https://thenounproject.com/term/record/23527/
+
+A mic image by
+- Dmitry Baranovskiy
+- https://thenounproject.com/term/microphone/5027/

@@ -9,6 +9,7 @@
 (defonce app-state (atom {:text "Hello world!"
                           :analyser-node nil
                           :audio-recorder nil
+                          :is-recording false
                           :audio-context audio-context}))
 
 
@@ -58,42 +59,44 @@
     ;(.connect source (.-destination context))
     ))
 
+(defn save-recording [recorder output-canvas-id audio-context]
+ (.stop recorder)
+ (.log js/console "HERE IN EXPROT")
+ (.getBuffers recorder
+              (fn [buffers]
+                (.log js/console "GOT BUFFERS" buffers)
+                (let [canvas (.getElementById js/document output-canvas-id)
+                      canvas-context (.getContext canvas "2d")
+                      canvas-width (.-width canvas)
+                      canvas-height (.-height canvas)]
+                  (draw-buffer! canvas-width canvas-height canvas-context (aget buffers 0)))
+                (.exportWAV recorder (fn [blob]
+                                       (let [buffer (aget buffers 0)]
+                                         (play-sound audio-context blob)
+                                         (.log js/console "GOT RECORDING: " blob)
+                                         (.clear recorder)
+                                         (.setupDownload js/Recorder blob "templ.wav")))))))
 
-(defn audio-view [data cursor]
+(defn audio-view [{:keys [audio-recorder is-recording audio-context] :as data} owner]
   (reify
     om/IDisplayName (display-name [_] "audio-view")
     om/IRender
     (render [_]
       (dom/div nil
         (dom/h1 nil "HEllo")
-        (dom/button #js {:onClick (fn [e]
+        (dom/div #js {:className "record"
+                         :onClick (fn [e]
                                     (.log js/console "CLICK")
-                                    (.log js/console "audio recorder: " (:audio-recorder data))
-                                    (let [rec (:audio-recorder data)]
-                                      (.record rec)
-                                      (.setTimeout js/window (fn []
-                                                               (.stop rec)
-                                                               (.log js/console "HERE IN EXPROT")
-                                                               (.getBuffers rec (fn [buffers]
-                                                                                 (.log js/console "GOT BUFFERS" buffers)
-                                                                                  (let [canvas (.getElementById js/document "buffer-display")
-                                                                                  canvas-context (.getContext canvas "2d")
-                                                                                  canvas-width (.-width canvas)
-                                                                                  canvas-height (.-height canvas)]
-                                                                                  (draw-buffer! canvas-width canvas-height canvas-context (aget buffers 0)))
-                                                                                 (.exportWAV rec (fn [blob]
-                                                                                                   (let [context (:audio-context data)
-                                                                                                         buffer (aget buffers 0)]
-                                                                                                   (play-sound context blob)
-                                                                                                   (.log js/console "GOT RECORDING: " blob)
-                                                                                                   (.clear rec)
-                                                                                                   (.setupDownload js/Recorder blob "templ.wav"))
-                                                                                                   ))
-                                                                                  )))
-                                                               4000)
-                                      )
-                                    )}
-                    "Button")))))
+                                    (.log js/console "audio recorder: " audio-recorder)
+                                    (.log js/console "is-recording: " is-recording)
+                                    (if is-recording
+                                      (do
+                                        (save-recording audio-recorder "buffer-display" audio-context)
+                                        (om/transact! data :is-recording not))
+                                      (do
+                                        (.record audio-recorder)
+                                        (om/transact! data :is-recording not))))}
+                    (if is-recording "Stop" "Record"))))))
 
 (defn mount-om-root []
   (om/root
@@ -103,8 +106,7 @@
         (render [_]
           (dom/div nil
                    (om/build audio-view data)
-                   (om/build audio/chart-view data)
-                   (dom/h1 nil "HEREEE")))))
+                   (om/build audio/chart-view data)))))
     app-state
     {:target (. js/document (getElementById "app"))}))
 

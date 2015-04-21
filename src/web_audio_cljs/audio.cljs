@@ -18,11 +18,14 @@
 (set-prop-if-undefined! "requestAnimationFrame" js/window
                         ["webkitRequestAnimationFrame" "mozRequestAnimationFrame"])
 
-(defn clear-canvas! [canvas-context canvas-width canvas-height]
-  (set! (.-fillStyle canvas-context) "#000000")
-  (.fillRect canvas-context 0 0 canvas-width canvas-height)
-  (set! (.-fillStyle canvas-context) "#F6D565")
-  (set! (.-lineCap canvas-context) "round"))
+(defn clear-canvas! [canvas-context canvas-width canvas-height bg-color]
+  (if (nil? bg-color)
+    (.clearRect canvas-context 0 0 canvas-width canvas-height)
+    (do
+      (set! (.-fillStyle canvas-context) bg-color)
+      (.fillRect canvas-context 0 0 canvas-width canvas-height)
+      (set! (.-fillStyle canvas-context) "#F6D565")
+      (set! (.-lineCap canvas-context) "round"))))
 
 (defn draw-line-on-canvas!
   [canvas-context canvas-height i spacing num-bars bar-width magnitude]
@@ -40,31 +43,35 @@
 ;;  get teh getByteFrequenceData and just take the max value of the data.
 (defn draw-bars!
   [canvas-context canvas-width canvas-height spacing num-bars multiplier freq-byte-data bar-width]
-  (clear-canvas! canvas-context canvas-width canvas-height)
+  (clear-canvas! canvas-context canvas-width canvas-height "#000000")
   (doseq [i (range num-bars)]
     (let [offset (.floor js/Math (* i multiplier))
           magnitude (/ (reduce #(+ (aget freq-byte-data (+ offset %2)) %1) (range multiplier))
                        multiplier)]
       (draw-line-on-canvas! canvas-context canvas-height i spacing num-bars bar-width magnitude))))
 
-(defn draw-circle! [canvas-el analyser-node]
+(defn max-of-array [array-of-nums]
+  (.apply js/Math.max nil array-of-nums))
+(defn min-of-array [array-of-nums]
+  (.apply js/Math.min nil array-of-nums))
+
+(defn draw-circle! [canvas-el freq-byte-data n]
   (let [canvas canvas-el
         canvas-context (.getContext canvas "2d")
         canvas-width (.-width canvas)
         canvas-height (.-height canvas)
-        r (/ canvas-width 2)
-        center-x r
-        center-y r
-        ]
-    (clear-canvas! canvas-context canvas-width canvas-height)
+        max-val (max-of-array freq-byte-data)
+        r (* (/ canvas-width 2) (/ max-val 256))
+        center-x (/ canvas-width 2)
+        center-y center-x]
+    ;(when (< n 100)
+      ;(aset js/window "freqData" freq-byte-data)
+      ;(.log js/console "freq-byte-data: " freq-byte-data))
+    (clear-canvas! canvas-context canvas-width canvas-height nil)
     (.beginPath canvas-context)
     (.arc canvas-context center-x center-y r 0 (* 2 (.-PI js/Math)) false)
-    ;; change fill to be hsl for frequency
     (aset canvas-context "fillStyle" "red")
-    (.fill canvas-context)
-    (aset canvas-context "lineWidth" 5)
-    (aset canvas-context "strokeStyle" "black")
-    (.stroke canvas-context)))
+    (.fill canvas-context)))
 
 (defn chart-view [{:keys [analyser-node] :as data} owner]
   (reify
@@ -79,6 +86,7 @@
          :canvas-height nil
          :spacing 3
          :bar-width 1
+         :n 0
          :num-bars nil
          :freq-byte-data nil
          :multiplier nil})
@@ -105,14 +113,14 @@
 
     om/IDidUpdate
     (did-update [_ prev-props prev-state]
-      (let [{:keys [recording-canvas canvas-context canvas-width canvas-height num-bars spacing bar-width]} (om/get-state owner)
+      (let [{:keys [recording-canvas canvas-context canvas-width canvas-height num-bars spacing bar-width n]} (om/get-state owner)
             {:keys [freq-byte-data multiplier]} (get-time-domain-data analyser-node num-bars)]
         (.getByteFrequencyData analyser-node freq-byte-data)
         (when canvas-context
-          (draw-circle! recording-canvas analyser-node)
+          (draw-circle! recording-canvas freq-byte-data n)
           (draw-bars! canvas-context canvas-width canvas-height spacing
                       num-bars multiplier freq-byte-data bar-width))
-        (om/update-state! owner #(assoc % :freq-byte-data freq-byte-data :multiplier multiplier))))
+        (om/update-state! owner #(assoc % :freq-byte-data freq-byte-data :multiplier multiplier :n (inc n)))))
 
     om/IRender
     (render [_] nil)))

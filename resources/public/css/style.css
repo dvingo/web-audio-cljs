@@ -17,8 +17,17 @@ body {
 
   border-radius: 50px;
 
+  z-index: -1;
   background-image: url('/images/mic.svg');
+  /*
+   * mic
+   * mic2
+   * mic3
+   * mic_white
+   */
   background-size: 100% 100%;
+  position: absolute;
+  top: 360px;
 
   box-shadow: 2px 2px 6px;
 }

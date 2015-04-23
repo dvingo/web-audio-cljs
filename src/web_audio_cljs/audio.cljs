@@ -11,7 +11,7 @@
     (let [opts (map #(aget obj %) options)
           prop-to-use (first (filter #(not (nil? %)) opts))]
       (aset obj prop prop-to-use))))
-(set-prop-if-undefined! "AudioContext" js/window ["AudioContext" "webkitAudioContext"])
+(set-prop-if-undefined! "AudioContext" js/window ["AudioContext" "webkitAudioContext" "mozAudioContext"])
 (set-prop-if-undefined! "getUserMedia" js/navigator ["webkitGetUserMedia" "mozGetUserMedia"])
 (set-prop-if-undefined! "cancelAnimationFrame" js/window
                         ["webkitCancelAnimationFrame" "mozCancelAnimationFrame"])

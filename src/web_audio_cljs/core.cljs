@@ -5,11 +5,13 @@
               [web-audio-cljs.utils :refer [l]]))
 
 (enable-console-print!)
+
 (defonce audio-context (js/window.AudioContext.))
 (defonce app-state (atom {:text "Hello world!"
                           :analyser-node nil
                           :audio-recorder nil
                           :is-recording false
+                          :recorded-buffers []
                           :audio-context audio-context}))
 
 (defn draw-buffer! [width height canvas-context data]
@@ -33,44 +35,59 @@
     ;(.connect source (.-destination context))
     ))
 
-(defn save-recording [recorder output-canvas-id audio-context]
- (.stop recorder)
- (.log js/console "HERE IN EXPROT")
- (.getBuffers recorder
-              (fn [buffers]
-                (.log js/console "GOT BUFFERS" buffers)
-                (let [canvas (.getElementById js/document output-canvas-id)
-                      canvas-context (.getContext canvas "2d")
-                      canvas-width (.-width canvas)
-                      canvas-height (.-height canvas)]
-                  (draw-buffer! canvas-width canvas-height canvas-context (aget buffers 0)))
-                (.exportWAV recorder (fn [blob]
-                                       (let [buffer (aget buffers 0)]
-                                         (play-sound audio-context blob)
-                                         (.log js/console "GOT RECORDING: " blob)
-                                         (.clear recorder)
-                                         (.setupDownload js/Recorder blob "templ.wav")))))))
+(defn save-recording! [app-state audio-recorder audio-context]
+  (.stop audio-recorder)
+  (.getBuffers audio-recorder
+               (fn [buffers]
+                 (om/transact! app-state :recorded-buffers #(conj % (aget buffers 0)))
+                 (.clear audio-recorder))))
 
-(defn audio-view [{:keys [audio-recorder is-recording audio-context] :as data} owner]
+(defn recorder-view [{:keys [audio-recorder is-recording audio-context] :as data} owner]
   (reify
-    om/IDisplayName (display-name [_] "audio-view")
+    om/IDisplayName (display-name [_] "recorder-view")
     om/IRender
     (render [_]
       (dom/div nil
-        (dom/h1 nil "HEllo")
-        (dom/div #js {:className "record"
-                         :onClick (fn [e]
-                                    (.log js/console "CLICK")
-                                    (.log js/console "audio recorder: " audio-recorder)
-                                    (.log js/console "is-recording: " is-recording)
-                                    (if is-recording
-                                      (do
-                                        (save-recording audio-recorder "buffer-display" audio-context)
-                                        (om/transact! data :is-recording not))
-                                      (do
-                                        (.record audio-recorder)
-                                        (om/transact! data :is-recording not))))}
-                    (if is-recording "Stop" "Record"))))))
+               (dom/button #js {:className "toggle-recording"
+                                :onClick (fn [e]
+                                           (if is-recording
+                                             (do
+                                               (save-recording! data audio-recorder audio-context)
+                                               (om/transact! data :is-recording not))
+                                             (do
+                                               (.record audio-recorder)
+                                               (om/transact! data :is-recording not))))}
+                           (if is-recording "Stop" "Record"))))))
+
+(defn buffer-view [recorded-buffer owner]
+  (reify
+    om/IDisplayName (display-name [_] "buffer-view")
+
+    om/IInitState
+    (init-state [_] {:canvas nil
+                     :canvas-context nil
+                     :canvas-width 400
+                     :canvas-height 100})
+
+    om/IDidMount
+    (did-mount [_]
+      (let [{:keys [canvas-width canvas-height]} (om/get-state owner)
+            canvas (om/get-node owner "the-canvas")
+            canvas-context (.getContext canvas "2d")]
+        (draw-buffer! canvas-width canvas-height canvas-context recorded-buffer)))
+
+    om/IRenderState
+    (render-state [_ {:keys [canvas-width canvas-height]}]
+      (dom/div nil
+        (dom/canvas #js {:width canvas-width :height canvas-height :ref "the-canvas"} "no canvas")))))
+
+(defn buffers-list-view [{:keys [recorded-buffers] :as data} owner]
+  (reify
+    om/IDisplayName (display-name [_] "buffers-list-view")
+    om/IRender
+    (render [_]
+      (apply dom/div {:className "buffers-list"}
+             (om/build-all buffer-view (:recorded-buffers data))))))
 
 (defn mount-om-root []
   (om/root
@@ -79,7 +96,8 @@
         om/IRender
         (render [_]
           (dom/div nil
-                   (om/build audio-view data)
+                   (om/build recorder-view data)
+                   (om/build buffers-list-view data)
                    (om/build audio/chart-view data)))))
     app-state
     {:target (. js/document (getElementById "app"))}))

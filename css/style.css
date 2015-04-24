@@ -1,0 +1,51 @@
+body {
+  padding: 0 10px;
+  margin: 40px auto;
+  max-width: 1024px;
+
+  font-family: sans-serif;
+  font-size: 18px;
+  line-height: 1.6;
+
+  color: blanchedalmond;
+  background: mediumslateblue;
+}
+
+.record {
+  width: 100px;
+  height: 100px;
+
+  border-radius: 50px;
+
+  z-index: -1;
+  background-image: url('/images/mic.svg');
+  /*
+   * mic
+   * mic2
+   * mic3
+   * mic_white
+   */
+  background-size: 100% 100%;
+  position: absolute;
+  top: 360px;
+
+  box-shadow: 2px 2px 6px;
+}
+.record:hover {
+  -webkit-animation: spin 2s infinite linear;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@-webkit-keyframes start {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(0deg); }
+}
+
+@-webkit-keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

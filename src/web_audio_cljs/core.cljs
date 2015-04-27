@@ -1,8 +1,10 @@
 (ns ^:figwheel-always web-audio-cljs.core
-    (:require[om.core :as om :include-macros true]
-              [om.dom :as dom :include-macros true]
-              [web-audio-cljs.audio :as audio]
-              [web-audio-cljs.utils :refer [l]]))
+  (:require [om.core :as om :include-macros true]
+            [om.dom :as dom :include-macros true]
+            [web-audio-cljs.audio :as audio]
+            [web-audio-cljs.utils :refer [l]]
+            [cljs.core.async :refer [put! chan timeout <! >!] :as async])
+  (:require-macros [cljs.core.async.macros :refer [go go-loop alt!]]))
 
 (enable-console-print!)
 
@@ -14,19 +16,46 @@
                           :recorded-buffers []
                           :audio-context audio-context}))
 
+(defn lin-interp [x0 x1 y0 y1]
+  (fn [x]
+    (+ y0
+       (* (/ (- x x0)
+             (- x1 x0))
+          (- y1 y0)))))
+
+(defn min-arr-val [arr]
+  (loop [i 0 min-val (aget arr 0)]
+    (if (= i (.-length arr))
+      min-val
+      (let [cur-val (aget arr i)]
+        (if (< cur-val min-val)
+          (recur (inc i) cur-val)
+          (recur (inc i) min-val))))))
+
+(defn max-arr-val [arr]
+  (loop [i 0 max-val (aget arr 0)]
+    (if (= i (.-length arr))
+      max-val
+      (let [cur-val (aget arr i)]
+        (if (> cur-val max-val)
+          (recur (inc i) cur-val)
+          (recur (inc i) max-val))))))
+
 (defn draw-buffer! [width height canvas-context data]
   (let [step (.ceil js/Math (/ (.-length data) width))
-        amp (/ height 2)]
+        amp (/ height 2)
+        min-val (min-arr-val data)
+        max-val (max-arr-val data)
+        scale (lin-interp min-val max-val (- amp) amp)]
+    (.log js/console "min of data: " min-val)
+    (.log js/console "max of data: " max-val)
     (aset canvas-context "fillStyle" "silver")
     (.clearRect canvas-context 0 0 width height)
-    (.log js/console "amplitude" amp)
-    (.log js/console "data length " (.-length data))
-    (.log js/console "step " step)
-    (.log js/console "width " width)
     (doseq [i (range width)]
       (doseq [j (range step)]
-        (let [datum (aget data (+ (* i step) j))]
-          (.fillRect canvas-context i amp 1 (- (.max js/Math 1 (* datum amp)))))))))
+        (let [datum (.min js/Math (aget data (+ (* i step) j)) 1)
+              height (scale datum)]
+          (.fillRect canvas-context i amp 1 height))))))
 
 (defn play-sound [context sound-data]
   (let [audio-tag (.getElementById js/document "play-sound")]
@@ -35,14 +64,17 @@
     ;(.connect source (.-destination context))
     ))
 
-(defn save-recording! [app-state audio-recorder audio-context]
-  (.stop audio-recorder)
-  (.getBuffers audio-recorder
-               (fn [buffers]
-                 (om/transact! app-state :recorded-buffers #(conj % (aget buffers 0)))
-                 (.clear audio-recorder))))
+(defn save-recording! [app-state audio-recorder audio-context analyser-node]
+  (let [buffer-length (.-frequencyBinCount analyser-node)
+        data-array (js/window.Uint8Array. buffer-length)]
+    (.getByteTimeDomainData analyser-node data-array)
+    (.stop audio-recorder)
+    (.getBuffers audio-recorder
+                 (fn [buffers]
+                   (om/transact! app-state :recorded-buffers #(conj % (aget buffers 0)))
+                   (.clear audio-recorder)))))
 
-(defn recorder-view [{:keys [audio-recorder is-recording audio-context] :as data} owner]
+(defn recorder-view [{:keys [audio-recorder is-recording audio-context analyser-node] :as data} owner]
   (reify
     om/IDisplayName (display-name [_] "recorder-view")
     om/IRender
@@ -52,14 +84,14 @@
                                 :onClick (fn [e]
                                            (if is-recording
                                              (do
-                                               (save-recording! data audio-recorder audio-context)
+                                               (save-recording! data audio-recorder audio-context analyser-node)
                                                (om/transact! data :is-recording not))
                                              (do
                                                (.record audio-recorder)
                                                (om/transact! data :is-recording not))))}
                            (if is-recording "Stop" "Record"))))))
 
-(defn buffer-view [recorded-buffer owner]
+(defn buffer-view [time-domain-data owner]
   (reify
     om/IDisplayName (display-name [_] "buffer-view")
 
@@ -67,27 +99,39 @@
     (init-state [_] {:canvas nil
                      :canvas-context nil
                      :canvas-width 400
-                     :canvas-height 100})
+                     :canvas-height 100
+                     :mouse-chan (chan)})
 
     om/IDidMount
     (did-mount [_]
-      (let [{:keys [canvas-width canvas-height]} (om/get-state owner)
+      (let [{:keys [canvas-width canvas-height mouse-chan]} (om/get-state owner)
             canvas (om/get-node owner "the-canvas")
             canvas-context (.getContext canvas "2d")]
-        (draw-buffer! canvas-width canvas-height canvas-context recorded-buffer)))
+        (draw-buffer! canvas-width canvas-height canvas-context time-domain-data)
+        (go
+          (while true
+            (let [target (<! mouse-chan)]
+              (.log js/console "!!!target: " target))))))
 
     om/IRenderState
-    (render-state [_ {:keys [canvas-width canvas-height]}]
+    (render-state [_ {:keys [canvas-width canvas-height mouse-chan]}]
       (dom/div nil
-        (dom/canvas #js {:width canvas-width :height canvas-height :ref "the-canvas"} "no canvas")))))
+        (dom/canvas #js {:width canvas-width
+                         :height canvas-height
+                         :ref "the-canvas"
+                         :onMouseMove (fn [e]
+                                        (.stopPropagation e)
+                                        (.preventDefault e)
+                (.log js/console "Got mouse pageX, pageY: " (.-pageX e) (.-pageY e))
+                                        (put! mouse-chan (.-target e)))} "no canvas")))))
 
-(defn buffers-list-view [{:keys [recorded-buffers] :as data} owner]
+(defn buffers-list-view [{:keys [recorded-buffers]} owner]
   (reify
     om/IDisplayName (display-name [_] "buffers-list-view")
     om/IRender
     (render [_]
       (apply dom/div {:className "buffers-list"}
-             (om/build-all buffer-view (:recorded-buffers data))))))
+             (om/build-all buffer-view recorded-buffers)))))
 
 (defn mount-om-root []
   (om/root

@@ -19,6 +19,12 @@ This project is licensed under the MIT License:
 
 http://opensource.org/licenses/MIT
 
+## Recorder.js
+
+This project makes use of:
+
+https://github.com/mattdiamond/Recorderjs
+
 ## Icons
 
 This project uses the following images:

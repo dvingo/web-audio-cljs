@@ -10,8 +10,21 @@ lein new figwheel <project-name> -- --om
 ```
 
 To build and run the project:
-```
+```bash
 rlwrap lein figwheel
+```
+
+## Prod build
+
+In the `master` branch, from the top directory of the project:
+```bash
+lein clean && lein cljsbuild once min
+git checkout gh-pages
+mv resources/public/js/compiled/web_audio_cljs.js js/compiled/web_audio_cljs.js
+git add js/compiled/web_audio_cljs.js
+git commit -m "Message"
+git push origin gh-pages
+git checkout master
 ```
 
 # Licensing

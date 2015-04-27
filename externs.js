@@ -6,7 +6,6 @@ window.cancelAnimationFrame = function(){};
 window.requestAnimationFrame = function(){};
 window.Uint8Array  = function(){};
 
-
 AudioContext.createGain = function(){};
 AudioContext.createMediaStreamSource = {};
 navigator.getUserMedia = function(){};
@@ -49,7 +48,8 @@ DummyClass.height= function(){};
 DummyClass.clearRect= function(){};
 DummyClass.beginPath= function(){};
 DummyClass.arc= function(){};
+DummyClass.left = function(){};
 DummyClass.fill= function(){};
 DummyClass.getElementById= function(){};
-DummyClass.getContext= function(){};
 DummyClass.getByteFrequencyData = function(){};
+DummyClass.getBoundingClientRect = function(){};

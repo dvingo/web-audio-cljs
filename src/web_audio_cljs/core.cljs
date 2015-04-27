@@ -67,9 +67,7 @@
     ))
 
 (defn save-recording! [app-state audio-recorder audio-context analyser-node]
-  (let [buffer-length (.-frequencyBinCount analyser-node)
-        data-array (js/window.Uint8Array. buffer-length)]
-    (.getByteTimeDomainData analyser-node data-array)
+  (let [buffer-length (.-frequencyBinCount analyser-node)]
     (.stop audio-recorder)
     (.getBuffers audio-recorder
                  (fn [buffers]

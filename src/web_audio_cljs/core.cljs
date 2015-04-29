@@ -1,9 +1,12 @@
 (ns ^:figwheel-always web-audio-cljs.core
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
+            [goog.dom :as googdom]
+            [goog.events :as events]
             [web-audio-cljs.audio :as audio]
             [web-audio-cljs.utils :refer [l]]
-            [cljs.core.async :refer [put! chan timeout <! >!] :as async])
+            [cljs.core.async :refer [put! chan timeout sliding-buffer <! >!]])
+  (:import [goog.events EventType])
   (:require-macros [cljs.core.async.macros :refer [go go-loop alt!]]))
 
 (enable-console-print!)
@@ -15,6 +18,12 @@
                           :is-recording false
                           :recorded-buffers []
                           :audio-context audio-context}))
+
+(defn listen [el type]
+  (let [out (chan)]
+    (events/listen el type
+      (fn [e] (put! out e)))
+    out))
 
 (defn lin-interp [x0 x1 y0 y1]
   (fn [x]
@@ -41,9 +50,14 @@
           (recur (inc i) cur-val)
           (recur (inc i) max-val))))))
 
-(defn draw-select-rect! [canvas-width canvas-height canvas-context x]
+(defn draw-select-rect! [canvas-width canvas-height canvas-context x mouse-down?]
   (.clearRect canvas-context 0 0 canvas-width canvas-height)
-  (.fillRect canvas-context x 0 100 100))
+  (.fillRect canvas-context x 0 100 100)
+  (when mouse-down?
+      (aset canvas-context "strokeStyle" "aliceblue")
+      (aset canvas-context "lineWidth" 6)
+      (.strokeRect canvas-context x 2 100 96)))
+
 
 (defn draw-buffer! [width height canvas-context data]
   (let [step (.ceil js/Math (/ (.-length data) width))
@@ -100,42 +114,44 @@
                      :canvas-context nil
                      :canvas-width 400
                      :canvas-height 100
-                     :mouse-chan (chan)
+                     :mouse-down false
                      :x-offset 0})
 
     om/IDidMount
     (did-mount [_]
-      (let [{:keys [canvas-width canvas-height mouse-chan left-x x-offset]} (om/get-state owner)
+      (let [{:keys [canvas-width canvas-height left-x x-offset]} (om/get-state owner)
             canvas (om/get-node owner "canvas-ref")
             canvas-context (.getContext canvas "2d")
-            x-pos (.-left (.getBoundingClientRect canvas))]
+            x-pos (.-left (.getBoundingClientRect canvas))
+            mouse-move-chan (listen (googdom/getElement js/document) (.-MOUSEMOVE EventType))]
         (go
           (while true
-            (let [[target x y] (<! mouse-chan)
-                  rel-x (- x x-pos)]
-              (.log js/console "!!!target: " target)
-              (.log js/console "!!!X" x)
-              (.log js/console "OFFSET x: " rel-x)
-              (.log js/console "!!!Y" y)
-              (om/update-state! owner #(assoc % :x-offset rel-x)))))
+            (let [e (<! mouse-move-chan)
+                  x (.-clientX e)
+                  rel-x (- (- x x-pos) (/ 100 2))
+                  {:keys [mouse-down]} (om/get-state owner)]
+              (when mouse-down
+                (.log js/console "!!!clientX" x)
+                (.log js/console "OFFSET x: " rel-x)
+                (om/update-state! owner #(assoc % :x-offset rel-x))))))
         (om/update-state! owner #(assoc % :canvas-context canvas-context :canvas canvas))))
 
     om/IDidUpdate
-    (did-update [_ _ {:keys [canvas-width canvas-height canvas-context x-offset]}]
-      (if canvas-context
-        (draw-select-rect! canvas-width canvas-height canvas-context x-offset)
-        (om/refresh! owner)))
+    (did-update [_ _ _]
+      (let [{:keys [canvas-width canvas-height canvas-context x-offset mouse-down]} (om/get-state owner)]
+        (if canvas-context
+          (draw-select-rect! canvas-width canvas-height canvas-context x-offset mouse-down)
+          (om/refresh! owner))))
 
     om/IRenderState
-    (render-state [_ {:keys [canvas-width canvas-height mouse-chan]}]
-      (dom/canvas #js {:width canvas-width
-                       :height canvas-height
-                       :style #js {:opacity 0.3 :position "relative" :left (- canvas-width)}
-                       :ref "canvas-ref"
-                       :onMouseMove (fn [e]
-                                      (.stopPropagation e)
-                                      (.preventDefault e)
-                                      (put! mouse-chan [(.-target e) (.-pageX e) (.-pageY e)]))} "no canvas"))))
+    (render-state [_ {:keys [canvas-width canvas-height mouse-down]}]
+      (dom/canvas #js {:width       canvas-width
+                       :height      canvas-height
+                       :style       #js {:opacity 0.3 :position "relative" :left (- canvas-width)}
+                       :ref         "canvas-ref"
+                       :onMouseDown #(om/set-state! owner :mouse-down true)
+                       :onMouseUp   #(om/set-state! owner :mouse-down false)}
+                  "no canvas"))))
 
 (defn buffer-view [data owner]
   (reify
@@ -145,31 +161,21 @@
     (init-state [_] {:canvas nil
                      :canvas-context nil
                      :canvas-width 400
-                     :canvas-height 100
-                     :mouse-chan (chan)})
+                     :canvas-height 100})
 
     om/IDidMount
     (did-mount [_]
-      (let [{:keys [canvas-width canvas-height mouse-chan buffer]} (om/get-state owner)
+      (let [{:keys [canvas-width canvas-height buffer]} (om/get-state owner)
             canvas (om/get-node owner "canvas-ref")
             canvas-context (.getContext canvas "2d")]
-        (draw-buffer! canvas-width canvas-height canvas-context buffer)
-        (go
-          (while true
-            (let [target (<! mouse-chan)]
-              (.log js/console "!!!target: " target))))))
+        (draw-buffer! canvas-width canvas-height canvas-context buffer)))
 
     om/IRenderState
-    (render-state [_ {:keys [canvas-width canvas-height mouse-chan]}]
+    (render-state [_ {:keys [canvas-width canvas-height]}]
       (dom/div nil
         (dom/canvas #js {:width canvas-width
                          :height canvas-height
-                         :ref "canvas-ref"
-                         :onMouseMove (fn [e]
-                                        (.stopPropagation e)
-                                        (.preventDefault e)
-                (.log js/console "Got mouse pageX, pageY: " (.-pageX e) (.-pageY e))
-                                        (put! mouse-chan (.-target e)))} "no canvas")
+                         :ref "canvas-ref"} "no canvas")
                (om/build wave-selector-view data)))))
 
 (defn buffers-list-view [data owner]

@@ -58,7 +58,6 @@
       (aset canvas-context "lineWidth" 6)
       (.strokeRect canvas-context x 2 100 96)))
 
-
 (defn draw-buffer! [width height canvas-context data]
   (let [step (.ceil js/Math (/ (.-length data) width))
         amp (/ height 2)

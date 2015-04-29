@@ -42,6 +42,7 @@ DummyClass.connect=function(){};
 DummyClass.noteOff=function(){};
 DummyClass.fillStyle = function(){};
 DummyClass.fillRect = function(){};
+DummyClass.strokeRect = function(){};
 DummyClass.getContext= function(){};
 DummyClass.width= function(){};
 DummyClass.height= function(){};

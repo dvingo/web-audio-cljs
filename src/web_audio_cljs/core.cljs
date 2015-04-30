@@ -20,11 +20,17 @@
                           :recorded-buffers []
                           :audio-context audio-context}))
 
-(defn listen [el type]
-  (let [out (chan)]
-    (events/listen el type
-      (fn [e] (put! out e)))
-    out))
+(defn listen
+  ([el type]
+   (let [out (chan)]
+     (events/listen el type
+       (fn [e] (put! out e)))
+     out))
+  ([el type tx]
+   (let [out (chan 1 tx)]
+     (events/listen el type
+       (fn [e] (put! out e)))
+     out)))
 
 (defn lin-interp [x0 x1 y0 y1]
   (fn [x]
@@ -33,23 +39,20 @@
              (- x1 x0))
           (- y1 y0)))))
 
-(defn min-arr-val [arr]
+(defn superlative-of [arr compar]
   (loop [i 0 min-val (aget arr 0)]
     (if (= i (.-length arr))
       min-val
       (let [cur-val (aget arr i)]
-        (if (< cur-val min-val)
+        (if (apply compar [cur-val min-val])
           (recur (inc i) cur-val)
           (recur (inc i) min-val))))))
 
+(defn min-arr-val [arr]
+  (superlative-of arr <))
+
 (defn max-arr-val [arr]
-  (loop [i 0 max-val (aget arr 0)]
-    (if (= i (.-length arr))
-      max-val
-      (let [cur-val (aget arr i)]
-        (if (> cur-val max-val)
-          (recur (inc i) cur-val)
-          (recur (inc i) max-val))))))
+  (superlative-of arr >))
 
 (defn draw-select-rect! [canvas-width canvas-height canvas-context mouse-down? mouse-over?]
   (.clearRect canvas-context 0 0 canvas-width canvas-height)
@@ -59,7 +62,7 @@
     (do
       (aset canvas-context "strokeStyle" "aliceblue")
       (aset canvas-context "lineWidth" 6)
-      (.strokeRect canvas-context 0 2 100 96))
+      (.strokeRect canvas-context 2 2 96 96))
     mouse-over?
     (do
       (aset canvas-context "strokeStyle" "aliceblue")
@@ -101,16 +104,24 @@
     om/IRender
     (render [_]
       (dom/div nil
-               (dom/button #js {:className "toggle-recording"
-                                :onClick (fn [e]
-                                           (if is-recording
-                                             (do
-                                               (save-recording! data audio-recorder audio-context analyser-node)
-                                               (om/transact! data :is-recording not))
-                                             (do
-                                               (.record audio-recorder)
-                                               (om/transact! data :is-recording not))))}
-                           (if is-recording "Stop" "Record"))))))
+        (dom/button #js {:className "toggle-recording"
+                         :onClick (fn [e]
+                                    (if is-recording
+                                      (do
+                                        (save-recording! data audio-recorder audio-context analyser-node)
+                                        (om/transact! data :is-recording not))
+                                      (do
+                                        (.record audio-recorder)
+                                        (om/transact! data :is-recording not))))}
+                    (if is-recording "Stop" "Record"))))))
+
+(defn clamped-rel-mouse-pos [e min-x max-x {:keys [x-offset mouse-down-pos mouse-down]}]
+  (if mouse-down
+    (let [x (.-clientX e)
+          [old-x old-y] mouse-down-pos
+          new-x (+ x-offset (- x old-x))]
+      [(.clamp goog.math new-x min-x max-x) old-x old-y])
+    nil))
 
 (defn wave-selector-view [data owner]
   (reify
@@ -133,18 +144,14 @@
             canvas-context (.getContext canvas "2d")
             mouse-move-chan (listen js/document (.-MOUSEMOVE EventType))
             mouse-up-chan (listen js/document (.-MOUSEUP EventType))]
-        ;;;
-        ;;; On any mouse up on the document, set mouse-down to false.
         (go
           (while true
-            (let [e (<! mouse-move-chan)
-                  x (.-clientX e)
-                  {:keys [mouse-down x-offset mouse-down-pos]} (om/get-state owner)
-                  [old-x old-y] mouse-down-pos
-                  new-x (+ x-offset (- x old-x))
-                  clamp-x (.clamp goog.math new-x 0 (- 400 canvas-width))]
-              (when mouse-down
-                (om/update-state! owner #(assoc % :x-offset clamp-x :mouse-down-pos [x old-y]))))))
+            (alt!
+              mouse-move-chan
+              ([v] (when-let [[clamp-x _ old-y] (clamped-rel-mouse-pos v 0 (- 400 canvas-width) (om/get-state owner))]
+                     (om/update-state! owner #(assoc % :x-offset clamp-x :mouse-down-pos [(.-clientX v) old-y]))))
+              mouse-up-chan
+              ([_] (om/set-state! owner :mouse-down false)))))
         (om/update-state! owner #(assoc % :canvas-context canvas-context :canvas canvas))))
 
     om/IDidUpdate
@@ -161,8 +168,8 @@
                        :height      canvas-height
                        :style       #js {:opacity 0.3 :position "absolute" :left x-offset}
                        :ref         "canvas-ref"
-                       :onMouseDown (fn [e] (om/set-state! owner :mouse-down true) (om/set-state! owner :mouse-down-pos [(.-clientX e) (.-clientY e)]))
-                       :onMouseUp   #(om/set-state! owner :mouse-down false)
+                       :onMouseDown (fn [e] (om/update-state! owner
+                                              #(assoc % :mouse-down true :mouse-down-pos [(.-clientX e) (.-clientY e)])))
                        :onMouseOver #(om/set-state! owner :mouse-over true)
                        :onMouseOut  #(om/set-state! owner :mouse-over false)}
                   "no canvas"))))
@@ -186,7 +193,7 @@
 
     om/IRenderState
     (render-state [_ {:keys [canvas-width canvas-height]}]
-      (dom/div #js {:style  #js {:position "relative"}}
+      (dom/div #js {:style #js {:position "relative"}}
         (dom/canvas #js {:width  canvas-width
                          :height canvas-height
                          :ref    "canvas-ref"}

@@ -2,8 +2,7 @@
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [clojure.string :as string]
-            [web-audio-cljs.utils :refer [l]]
-            ))
+            [web-audio-cljs.utils :refer [l]]))
 
 ;; Browser BS dance.
 (defn set-prop-if-undefined! [prop obj options]

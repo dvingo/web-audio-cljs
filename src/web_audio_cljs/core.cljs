@@ -1,11 +1,10 @@
 (ns ^:figwheel-always web-audio-cljs.core
-  (:require [cljs.core.async :refer [put! chan timeout sliding-buffer <! >!]]
+  (:require [cljs.core.async :refer [chan]]
+            [cljs-uuid.core :as uuid]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
-            [goog.dom]
-            [goog.events :as events]
-            [goog.math]
             [web-audio-cljs.audio :as audio]
+            [web-audio-cljs.state :refer [actions-handler]]
             [web-audio-cljs.components.audio-buffer-list :refer [buffers-list-view]]
             [web-audio-cljs.components.recorder :refer [recorder-view]]))
 
@@ -13,46 +12,67 @@
 
 (defonce audio-context (js/window.AudioContext.))
 
-(defonce app-state (atom {:text "Hello world!"
-                          :analyser-node nil
-                          :audio-recorder nil
-                          :is-recording false
-                          :recorded-buffers []
-                          :audio-context audio-context}))
+(let [track-id1 (uuid/make-random)
+      track-id2 (uuid/make-random)
+      play-sound-id1 (uuid/make-random)
+      play-sound-id2 (uuid/make-random)
+      play-sound-id3 (uuid/make-random)
+      play-sound-id4 (uuid/make-random)
+      play-sound-id5 (uuid/make-random)
+      play-sound-id6 (uuid/make-random)
+      recorded-sound-id1 (uuid/make-random)
+      recorded-sound-id2 (uuid/make-random)
+      recorded-sound-id3 (uuid/make-random)
+      recorded-sound-id4 (uuid/make-random)
+      db {:compositions [{:id (uuid/make-random) :name "First composition" :tracks [track-id1 track-id2]}]
+          :tracks [{:id track-id1 :name "First track" :play-sounds [play-sound-id1 play-sound-id2 play-sound-id3]}
+                   {:id track-id2 :name "Second track" :play-sounds [play-sound-id4 play-sound-id5 play-sound-id6]}]
+          :recorded-sounds [{:id recorded-sound-id1 :name "beep" :audio-buffer nil}
+                            {:id recorded-sound-id2 :name "bleep" :audio-buffer nil}
+                            {:id recorded-sound-id3 :name "bloop" :audio-buffer nil}
+                            {:id recorded-sound-id4 :name "bop" :audio-buffer nil}]
+          :play-sounds [{:id play-sound-id1 :recorded-sound recorded-sound-id1 :type :quarter :offset 7998}
+                        {:id play-sound-id2 :recorded-sound recorded-sound-id2 :type :whole :offset 4498}
+                        {:id play-sound-id3 :recorded-sound recorded-sound-id3 :type :quarter :offset 8998}
+                        {:id play-sound-id4 :recorded-sound recorded-sound-id4 :type :eigth :offset 998}]
+          :analyser-node nil
+          :audio-recorder nil
+          :is-recording false
+          :audio-context audio-context}]
+  (defonce app-state (atom db)))
 
 (defn play-sound [context sound-data]
   (let [audio-tag (.getElementById js/document "play-sound")]
-    ;source (.createMediaElementSource context audio-tag)]
-    (aset audio-tag "src" (.createObjectURL js/window.URL sound-data))
-    ;(.connect source (.-destination context))
-    ))
+    (aset audio-tag "src" (.createObjectURL js/window.URL sound-data))))
 
 (defn mount-om-root []
-  (om/root
-    (fn [data owner]
-      (reify
-        om/IRender
-        (render [_]
-          (dom/div nil
-                   (om/build recorder-view data)
-                   (om/build buffers-list-view data)
-                   (om/build audio/chart-view data)))))
-    app-state
-    {:target (. js/document (getElementById "app"))}))
+  (let [action-chan (chan)]
+    (om/root
+      (fn [data owner]
+        (reify
+          om/IWillMount
+          (will-mount [_] (actions-handler action-chan data))
+          om/IRender
+          (render [_]
+            (dom/div nil
+                     (om/build recorder-view data)
+                     (om/build buffers-list-view data)
+                     (om/build audio/chart-view data)))))
+      app-state
+      {:shared {:action-chan action-chan}
+       :target (. js/document (getElementById "app"))})))
 
 (defonce got-audio? (atom false))
 
 (defn got-stream [stream]
   (reset! got-audio? true)
   (let [audio-context (:audio-context @app-state)
-        input-point (.createGain audio-context)
         audio-input (.createMediaStreamSource audio-context stream)]
-    (.connect audio-input input-point)
     (let [analyser-node (.createAnalyser audio-context)]
       (set! (.-fftSize analyser-node) 2048)
-      (.connect input-point analyser-node)
-      (swap! app-state assoc :audio-recorder (js/Recorder. input-point))
-      (swap! app-state assoc :analyser-node analyser-node)
+      (.connect audio-input analyser-node)
+      (swap! app-state assoc :audio-recorder (js/Recorder. audio-input)
+                             :analyser-node analyser-node)
       (mount-om-root))))
 
 (when-not @got-audio?

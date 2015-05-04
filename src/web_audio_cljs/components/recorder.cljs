@@ -13,8 +13,7 @@
       (dom/div nil
         (dom/button #js {:className "toggle-recording"
                          :onClick #(put! (:action-chan (om/get-shared owner))
-                                       [:toggle-recording sound-name])}
+                                         [:toggle-recording sound-name])}
           (if is-recording "Stop" "Record"))
         (dom/input #js {:onChange #(om/set-state! owner :sound-name (.. % -target -value))
-                        :value sound-name} nil)
-               ))))
+                        :value sound-name} nil)))))

@@ -4,7 +4,6 @@
             [clojure.string :as string]
             [web-audio-cljs.utils :refer [l]]))
 
-;; Browser BS dance.
 (defn set-prop-if-undefined! [prop obj options]
   (when-not (aget obj prop)
     (let [opts (map #(aget obj %) options)

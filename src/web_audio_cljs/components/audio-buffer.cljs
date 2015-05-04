@@ -39,26 +39,28 @@
 (defn audio-buffer-view [data owner]
   (reify
     om/IDisplayName (display-name [_] "audio-buffer-view")
-
     om/IInitState
     (init-state [_] {:canvas nil
                      :canvas-context nil
                      :canvas-width 400
                      :canvas-height 100})
-
     om/IDidMount
     (did-mount [_]
-      (let [{:keys [canvas-width canvas-height buffer]} (om/get-state owner)
+      (let [{:keys [canvas-width canvas-height recorded-sound]} (om/get-state owner)
+            sound-name (:name recorded-sound)
+            audio-buffer (:audio-buffer recorded-sound)
             canvas (om/get-node owner "canvas-ref")
             canvas-context (.getContext canvas "2d")]
-        (draw-buffer! canvas-width canvas-height canvas-context buffer)))
-
+        (draw-buffer! canvas-width canvas-height canvas-context audio-buffer)))
     om/IRenderState
-    (render-state [_ {:keys [canvas-width canvas-height buffer]}]
+    (render-state [_ {:keys [canvas-width canvas-height recorded-sound]}]
+      (let [audio-buffer (:audio-buffer recorded-sound)
+            sound-name (:name recorded-sound)]
       (dom/div #js {:style #js {:position "relative"}}
+        (dom/h3 nil sound-name)
         (dom/canvas #js {:width  canvas-width
                          :height canvas-height
                          :ref    "canvas-ref"}
                     "no canvas")
         (om/build wave-selector-view data)
-        (om/build play-audio-buffer-view {:buffer-data buffer :audio-context (:audio-context data)})))))
+        (om/build play-audio-buffer-view {:buffer-data audio-buffer :audio-context (:audio-context data)}))))))

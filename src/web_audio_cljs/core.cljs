@@ -12,19 +12,7 @@
 
 (defonce audio-context (js/window.AudioContext.))
 
-(let [track-id1 (uuid/make-random)
-      track-id2 (uuid/make-random)
-      play-sound-id1 (uuid/make-random)
-      play-sound-id2 (uuid/make-random)
-      play-sound-id3 (uuid/make-random)
-      play-sound-id4 (uuid/make-random)
-      play-sound-id5 (uuid/make-random)
-      play-sound-id6 (uuid/make-random)
-      recorded-sound-id1 (uuid/make-random)
-      recorded-sound-id2 (uuid/make-random)
-      recorded-sound-id3 (uuid/make-random)
-      recorded-sound-id4 (uuid/make-random)
-      db {:compositions [{:id (uuid/make-random) :name "First composition" :tracks [track-id1 track-id2]}]
+#_{:compositions [{:id (uuid/make-random) :name "First composition" :tracks [track-id1 track-id2]}]
           :tracks [{:id track-id1 :name "First track" :play-sounds [play-sound-id1 play-sound-id2 play-sound-id3]}
                    {:id track-id2 :name "Second track" :play-sounds [play-sound-id4 play-sound-id5 play-sound-id6]}]
           :recorded-sounds [{:id recorded-sound-id1 :name "beep" :audio-buffer nil}
@@ -34,7 +22,12 @@
           :play-sounds [{:id play-sound-id1 :recorded-sound recorded-sound-id1 :type :quarter :offset 7998}
                         {:id play-sound-id2 :recorded-sound recorded-sound-id2 :type :whole :offset 4498}
                         {:id play-sound-id3 :recorded-sound recorded-sound-id3 :type :quarter :offset 8998}
-                        {:id play-sound-id4 :recorded-sound recorded-sound-id4 :type :eigth :offset 998}]
+                        {:id play-sound-id4 :recorded-sound recorded-sound-id4 :type :eigth :offset 998}]}
+
+(let [db {:compositions []
+          :tracks []
+          :recorded-sounds []
+          :play-sounds []
           :analyser-node nil
           :audio-recorder nil
           :is-recording false

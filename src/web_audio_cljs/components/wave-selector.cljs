@@ -49,14 +49,13 @@
             canvas-context (.getContext canvas "2d")
             mouse-move-chan (listen js/document (.-MOUSEMOVE EventType))
             mouse-up-chan (listen js/document (.-MOUSEUP EventType))]
-        (go
-          (while true
-            (alt!
-              mouse-move-chan
-              ([v] (when-let [[clamp-x _ old-y] (clamped-rel-mouse-pos v 0 (- 400 canvas-width) (om/get-state owner))]
-                     (om/update-state! owner #(assoc % :x-offset clamp-x :mouse-down-pos [(.-clientX v) old-y]))))
-              mouse-up-chan
-              ([_] (om/set-state! owner :mouse-down false)))))
+        (go (while true
+          (alt!
+            mouse-move-chan
+            ([v] (when-let [[clamp-x _ old-y] (clamped-rel-mouse-pos v 0 (- 400 canvas-width) (om/get-state owner))]
+                   (om/update-state! owner #(assoc % :x-offset clamp-x :mouse-down-pos [(.-clientX v) old-y]))))
+            mouse-up-chan
+            ([_] (om/set-state! owner :mouse-down false)))))
         (om/update-state! owner #(assoc % :canvas-context canvas-context :canvas canvas))))
 
     om/IDidUpdate
@@ -72,7 +71,8 @@
       (dom/canvas #js {:className   "wave-selector"
                        :width       canvas-width
                        :height      canvas-height
-                       :style       #js {:opacity 0.3 :position "absolute" :left x-offset}
+                       :style       #js {:opacity 0.3 :position "absolute" :left x-offset
+                                         :cursor (if mouse-down "move" "default")}
                        :ref         "canvas-ref"
                        :onMouseDown (fn [e] (om/update-state! owner
                                               #(assoc % :mouse-down true

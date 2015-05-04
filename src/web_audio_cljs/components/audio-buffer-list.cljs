@@ -8,7 +8,6 @@
     om/IDisplayName (display-name [_] "audio-buffers-list-view")
     om/IRender
     (render [_]
-      (.log js/console "num recorded sounds: " (.-length (:recorded-sounds data)))
       (apply dom/div {:className "buffers-list"}
              (map #(om/build audio-buffer-view data {:init-state {:recorded-sound %}})
                   (:recorded-sounds data))))))

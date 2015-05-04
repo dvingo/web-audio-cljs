@@ -31,7 +31,8 @@
           :analyser-node nil
           :audio-recorder nil
           :is-recording false
-          :audio-context audio-context}]
+          :audio-context audio-context
+          :bpm 120}]
   (defonce app-state (atom db)))
 
 (defn play-sound [context sound-data]
@@ -48,9 +49,9 @@
           om/IRender
           (render [_]
             (dom/div nil
-                     (om/build recorder-view data)
-                     (om/build buffers-list-view data)
-                     (om/build audio/chart-view data)))))
+              (om/build recorder-view data)
+              (om/build buffers-list-view data)
+              (om/build audio/chart-view data)))))
       app-state
       {:shared {:action-chan action-chan}
        :target (. js/document (getElementById "app"))})))

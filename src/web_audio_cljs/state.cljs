@@ -19,9 +19,9 @@
     (.stop audio-recorder)
     (.getBuffers audio-recorder
                  (fn [buffers]
-                   (let [new-rec-sound (new-recorded-sound (aget buffers 0) sound-name)]
-                   (om/transact! app-state :recorded-sounds #(conj % new-rec-sound))
-                   (.clear audio-recorder))))))
+                   (om/transact! app-state :recorded-sounds
+                                 #(conj % (new-recorded-sound (aget buffers 0) sound-name)))
+                   (.clear audio-recorder)))))
 
 (defn handle-toggle-recording [app-state sound-name]
   (let [{:keys [is-recording audio-recorder]} @app-state]

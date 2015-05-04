@@ -11,10 +11,6 @@ body {
   background: mediumslateblue;
 }
 
-.wave-selector:hover {
-  cursor: move;
-}
-
 .record {
   width: 100px;
   height: 100px;

@@ -18,24 +18,34 @@
               height (scale datum)]
           (.fillRect canvas-context i amp 1 height))))))
 
+(defn play-buffer [audio-context buffer-data]
+  (let [source (.createBufferSource audio-context)
+        buffer (.createBuffer audio-context 1
+                              (.-length buffer-data)
+                              (.-sampleRate audio-context))
+        chan-data (.getChannelData buffer 0)]
+    (.set chan-data buffer-data)
+    (aset source "buffer" buffer)
+    (.connect source (.-destination audio-context))
+    (.start source 0)))
+
 (defn play-audio-buffer-view [{:keys [buffer-data audio-context]} owner]
   (reify
     om/IDisplayName (display-name [_] "play-audio-buffer-view")
     om/IRender
     (render [_]
-      (dom/button #js {
-                      :onClick (fn [e]
-                                 (let [source (.createBufferSource audio-context)
-                                       buffer (.createBuffer audio-context 1
-                                                             (.-length buffer-data) (.-sampleRate audio-context))
-                                       chan-data (.getChannelData buffer 0)]
-                                   (.set chan-data buffer-data)
-                                   (aset source "buffer" buffer)
-                                   (.connect source (.-destination audio-context))
-                                   (.start source 0)))
-                       }
+      (dom/button #js {:onClick #(play-buffer audio-context buffer-data)}
                   "Play"))))
 
+;; TODO
+;; Add note type drop down.
+;; Move selector, then press "make sound" which will create a new "play-sound"
+;; Add "Make Track" then drag play-sounds to a track.
+;; Then rearrange tracks.
+;; Then play button for all tracks. - use metronome code.
+;; Add play head to view playback.
+;; Then add saving state to index db.
+;;
 (defn audio-buffer-view [data owner]
   (reify
     om/IDisplayName (display-name [_] "audio-buffer-view")
@@ -57,7 +67,7 @@
       (let [audio-buffer (:audio-buffer recorded-sound)
             sound-name (:name recorded-sound)]
       (dom/div #js {:style #js {:position "relative"}}
-        (dom/h3 nil sound-name)
+      (dom/h3 nil sound-name)
         (dom/canvas #js {:width  canvas-width
                          :height canvas-height
                          :ref    "canvas-ref"}

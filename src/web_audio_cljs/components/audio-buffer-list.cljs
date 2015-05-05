@@ -9,5 +9,5 @@
     om/IRender
     (render [_]
       (apply dom/div {:className "buffers-list"}
-             (map #(om/build audio-buffer-view data {:fn (fn [d] (assoc d :recorded-sound %))})
-                  (:recorded-sounds data))))))
+        (map #(om/build audio-buffer-view data {:fn (fn [d] (assoc d :recorded-sound %))})
+             (:recorded-sounds data))))))

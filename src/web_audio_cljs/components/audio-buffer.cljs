@@ -44,7 +44,8 @@
     (render [_]
       (dom/select #js {:onChange
                        #(put! (:action-chan (om/get-shared owner))
-                              [:set-recorded-sound-note-type (:id recorded-sound) (.. % -target -value)])}
+                              [:set-recorded-sound-note-type (:id recorded-sound) (.. % -target -value)])
+                       :value (name (:current-note-type recorded-sound))}
         (dom/option #js {:value "eighth"} "Eighth")
         (dom/option #js {:value "quarter"} "Quarter")
         (dom/option #js {:value "half"} "Half")
@@ -81,7 +82,8 @@
     om/IRenderState
     (render-state [_ {:keys [canvas-width canvas-height current-note-type]}]
       (let [audio-buffer (:audio-buffer recorded-sound)
-            sound-name (:name recorded-sound)]
+            sound-name (:name recorded-sound)
+            selector-width (note-type->width (:current-note-type recorded-sound) canvas-width)]
       (dom/div #js {:style #js {:position "relative"}}
 
         (dom/div nil
@@ -93,5 +95,5 @@
                          :ref    "canvas-ref"}
                     "no canvas")
 
-        (om/build wave-selector-view data {:state {:recorded-sound recorded-sound :max-width canvas-width}})
+        (om/build wave-selector-view data {:state {:canvas-width selector-width :max-width canvas-width}})
         (om/build play-audio-buffer-view {:buffer-data audio-buffer :audio-context (:audio-context data)}))))))

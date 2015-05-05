@@ -1,8 +1,9 @@
 (ns web-audio-cljs.components.audio-buffer
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
+            [cljs.core.async :refer [put!]]
             [web-audio-cljs.components.wave-selector :refer [wave-selector-view]]
-            [web-audio-cljs.utils :refer [l min-arr-val max-arr-val lin-interp]]))
+            [web-audio-cljs.utils :refer [l min-arr-val max-arr-val lin-interp note-type->width]]))
 
 (defn draw-buffer! [width height canvas-context data]
   (let [step (.ceil js/Math (/ (.-length data) width))
@@ -30,12 +31,24 @@
     (.start source 0)))
 
 (defn play-audio-buffer-view [{:keys [buffer-data audio-context]} owner]
-  (reify
+    (reify
     om/IDisplayName (display-name [_] "play-audio-buffer-view")
     om/IRender
     (render [_]
-      (dom/button #js {:onClick #(play-buffer audio-context buffer-data)}
-                  "Play"))))
+      (dom/button #js {:onClick #(play-buffer audio-context buffer-data)} "Play"))))
+
+(defn note-type-view [recorded-sound owner]
+  (reify
+    om/IDisplayName (display-name [_] "note-type-view")
+    om/IRender
+    (render [_]
+      (dom/select #js {:onChange
+                       #(put! (:action-chan (om/get-shared owner))
+                              [:set-recorded-sound-note-type (:id recorded-sound) (.. % -target -value)])}
+        (dom/option #js {:value "eighth"} "Eighth")
+        (dom/option #js {:value "quarter"} "Quarter")
+        (dom/option #js {:value "half"} "Half")
+        (dom/option #js {:value "whole"} "Whole")))))
 
 ;; TODO
 ;; Add note type drop down.
@@ -46,31 +59,39 @@
 ;; Add play head to view playback.
 ;; Then add saving state to index db.
 ;;
-(defn audio-buffer-view [data owner]
+
+(defn audio-buffer-view [{:keys [recorded-sound] :as data} owner]
   (reify
     om/IDisplayName (display-name [_] "audio-buffer-view")
     om/IInitState
     (init-state [_] {:canvas nil
                      :canvas-context nil
                      :canvas-width 400
-                     :canvas-height 100})
+                     :canvas-height 100
+                     :current-note-type :quarter})
     om/IDidMount
     (did-mount [_]
-      (let [{:keys [canvas-width canvas-height recorded-sound]} (om/get-state owner)
+      (let [{:keys [canvas-width canvas-height]} (om/get-state owner)
             sound-name (:name recorded-sound)
             audio-buffer (:audio-buffer recorded-sound)
             canvas (om/get-node owner "canvas-ref")
             canvas-context (.getContext canvas "2d")]
         (draw-buffer! canvas-width canvas-height canvas-context audio-buffer)))
+
     om/IRenderState
-    (render-state [_ {:keys [canvas-width canvas-height recorded-sound]}]
+    (render-state [_ {:keys [canvas-width canvas-height current-note-type]}]
       (let [audio-buffer (:audio-buffer recorded-sound)
             sound-name (:name recorded-sound)]
       (dom/div #js {:style #js {:position "relative"}}
-      (dom/h3 nil sound-name)
+
+        (dom/div nil
+           (dom/h3 #js {:style #js {:display "inline-block" :marginRight "1em"}} sound-name)
+           (om/build note-type-view recorded-sound))
+
         (dom/canvas #js {:width  canvas-width
                          :height canvas-height
                          :ref    "canvas-ref"}
                     "no canvas")
-        (om/build wave-selector-view data)
+
+        (om/build wave-selector-view data {:state {:recorded-sound recorded-sound :max-width canvas-width}})
         (om/build play-audio-buffer-view {:buffer-data audio-buffer :audio-context (:audio-context data)}))))))

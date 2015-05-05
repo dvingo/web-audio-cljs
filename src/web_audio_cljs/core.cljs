@@ -15,10 +15,10 @@
 #_{:compositions [{:id (uuid/make-random) :name "First composition" :tracks [track-id1 track-id2]}]
           :tracks [{:id track-id1 :name "First track" :play-sounds [play-sound-id1 play-sound-id2 play-sound-id3]}
                    {:id track-id2 :name "Second track" :play-sounds [play-sound-id4 play-sound-id5 play-sound-id6]}]
-          :recorded-sounds [{:id recorded-sound-id1 :name "beep" :audio-buffer nil}
-                            {:id recorded-sound-id2 :name "bleep" :audio-buffer nil}
-                            {:id recorded-sound-id3 :name "bloop" :audio-buffer nil}
-                            {:id recorded-sound-id4 :name "bop" :audio-buffer nil}]
+          :recorded-sounds [{:id recorded-sound-id1 :name "beep" :audio-buffer nil :current-note-type :quarter}
+                            {:id recorded-sound-id2 :name "bleep" :audio-buffer nil :current-note-type :quarter}
+                            {:id recorded-sound-id3 :name "bloop" :audio-buffer nil :current-note-type :quarter}
+                            {:id recorded-sound-id4 :name "bop" :audio-buffer nil :current-note-type :quarter}]
           :play-sounds [{:id play-sound-id1 :recorded-sound recorded-sound-id1 :type :quarter :offset 7998}
                         {:id play-sound-id2 :recorded-sound recorded-sound-id2 :type :whole :offset 4498}
                         {:id play-sound-id3 :recorded-sound recorded-sound-id3 :type :quarter :offset 8998}
@@ -33,6 +33,7 @@
           :is-recording false
           :audio-context audio-context
           :bpm 120}]
+
   (defonce app-state (atom db)))
 
 (defn play-sound [context sound-data]

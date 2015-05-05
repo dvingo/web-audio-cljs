@@ -51,15 +51,6 @@
         (dom/option #js {:value "half"} "Half")
         (dom/option #js {:value "whole"} "Whole")))))
 
-;; TODO
-;; Add note type drop down.
-;; Move selector, then press "make sound" which will create a new "play-sound"
-;; Add "Make Track" then drag play-sounds to a track.
-;; Then rearrange tracks.
-;; Then play button for all tracks. - use metronome code.
-;; Add play head to view playback.
-;; Then add saving state to index db.
-;;
 
 (defn audio-buffer-view [{:keys [recorded-sound] :as data} owner]
   (reify
@@ -83,7 +74,8 @@
     (render-state [_ {:keys [canvas-width canvas-height current-note-type]}]
       (let [audio-buffer (:audio-buffer recorded-sound)
             sound-name (:name recorded-sound)
-            selector-width (note-type->width (:current-note-type recorded-sound) canvas-width)]
+            selector-width (note-type->width (:current-note-type recorded-sound) canvas-width)
+            selector-offset (:current-offset recorded-sound)]
       (dom/div #js {:style #js {:position "relative"}}
 
         (dom/div nil
@@ -95,5 +87,7 @@
                          :ref    "canvas-ref"}
                     "no canvas")
 
-        (om/build wave-selector-view data {:state {:canvas-width selector-width :max-width canvas-width}})
+        (om/build wave-selector-view data
+          {:state {:recorded-sound-id (:id recorded-sound)
+                   :x-offset selector-offset :canvas-width selector-width :max-width canvas-width}})
         (om/build play-audio-buffer-view {:buffer-data audio-buffer :audio-context (:audio-context data)}))))))

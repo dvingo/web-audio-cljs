@@ -16,7 +16,7 @@ rlwrap lein figwheel
 
 ## Prod build
 
-Make sure you add any public names you'd want minified to externs.js.
+Make sure you add any public names you don't want minified to externs.js.
 
 In the `master` branch, from the top directory of the project:
 ```bash

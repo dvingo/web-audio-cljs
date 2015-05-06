@@ -20,6 +20,10 @@
   "Length of a quarter note in milliseconds."
   (* (/ bpm 60) 1000))
 
+(defn recording-duration-sec [bpm]
+  "Length of a quarter note in seconds"
+  (/ bpm 60))
+
 (defn listen
   ([el type]
    (let [out (chan)]

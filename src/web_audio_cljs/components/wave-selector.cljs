@@ -1,5 +1,5 @@
 (ns web-audio-cljs.components.wave-selector
-  (:require [cljs.core.async :refer [>!]]
+  (:require [cljs.core.async :refer [>! put!]]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [web-audio-cljs.utils :refer [listen note-type->width]])
@@ -55,7 +55,7 @@
                  (let [{:keys [max-width canvas-width]} (om/get-state owner)]
                    (clamped-rel-mouse-pos v 0 (- max-width canvas-width) (om/get-state owner)))]
                 (>! (:action-chan (om/get-shared owner))
-                    [:set-recorded-sound-offset  recorded-sound-id clamp-x])
+                    [:set-recorded-sound-offset recorded-sound-id clamp-x])
                 (om/update-state! owner #(assoc % :x-offset clamp-x :mouse-down-pos [(.-clientX v) old-y]))))
             mouse-up-chan
             ([_] (om/set-state! owner :mouse-down false)))
@@ -63,8 +63,11 @@
         (om/update-state! owner #(assoc % :canvas-context canvas-context :canvas canvas))))
 
     om/IWillUpdate
-    (will-update [_ _ {:keys [recorded-sound max-width canvas-width x-offset]}]
-      (om/set-state! owner :x-offset (.clamp goog.math x-offset 0 (- max-width canvas-width))))
+    (will-update [_ _ {:keys [recorded-sound-id max-width canvas-width x-offset]}]
+      (let [clamp-x (.clamp goog.math x-offset 0 (- max-width canvas-width))]
+        (put! (:action-chan (om/get-shared owner))
+              [:set-recorded-sound-offset recorded-sound-id clamp-x])
+        (om/set-state! owner :x-offset clamp-x)))
 
     om/IDidUpdate
     (did-update [_ _ _]

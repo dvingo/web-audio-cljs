@@ -21,8 +21,8 @@
                             {:id recorded-sound-id4 :name "bop" :audio-buffer nil :current-note-type :quarter}]
           :play-sounds [{:id play-sound-id1 :recorded-sound recorded-sound-id1 :type :quarter :offset 7998}
                         {:id play-sound-id2 :recorded-sound recorded-sound-id2 :type :whole :offset 4498}
-                        {:id play-sound-id3 :recorded-sound recorded-sound-id3 :type :quarter :offset 8998}
-                        {:id play-sound-id4 :recorded-sound recorded-sound-id4 :type :eigth :offset 998}]}
+                        {:id play-sound-id3 :recorded-sound recorded-sound-id3 :type :half :offset 8998}
+                        {:id play-sound-id4 :recorded-sound recorded-sound-id4 :type :eighth :offset 998}]}
 
 (let [db {:compositions []
           :tracks []

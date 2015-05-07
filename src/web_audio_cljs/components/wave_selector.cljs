@@ -6,12 +6,11 @@
   (:import [goog.events EventType])
   (:require-macros [cljs.core.async.macros :refer [go go-loop alt!]]))
 
-(defn clamped-rel-mouse-pos [e min-x max-x {:keys [x-offset mouse-down-pos mouse-down] :as d}]
-  (if mouse-down
-    (let [x (.-clientX e)
-          [old-x old-y] mouse-down-pos
-          new-x (+ x-offset (- x old-x))]
-      [(.clamp goog.math new-x min-x max-x) x old-x old-y])))
+(defn rel-mouse-pos [e {:keys [x-offset mouse-down-pos]}]
+  (let [x (.-clientX e)
+        [old-x old-y] mouse-down-pos
+        new-x (+ x-offset (- x old-x))]
+    [new-x x old-x old-y]))
 
 (defn draw-select-rect! [canvas-width canvas-height canvas-context mouse-down? mouse-over?]
   (.clearRect canvas-context 0 0 canvas-width canvas-height)
@@ -47,28 +46,19 @@
             canvas-context (.getContext canvas "2d")
             mouse-move-chan (listen js/document (.-MOUSEMOVE EventType)
                                     (comp (filter #(:mouse-down (om/get-state owner)))
-                                          (map #(let [{:keys [max-width canvas-width]} (om/get-state owner)]
-                                             (clamped-rel-mouse-pos % 0
-                                                (- max-width canvas-width) (om/get-state owner))))))
+                                          (map #(rel-mouse-pos % (om/get-state owner)))))
             mouse-up-chan (listen js/document (.-MOUSEUP EventType))]
         (go-loop []
           (alt!
             mouse-move-chan
             ([[new-x mouse-down-x _ old-y]]
              (>! (:action-chan (om/get-shared owner))
-                 [:set-recorded-sound-offset (om/path recorded-sound) new-x])
+                 [:set-recorded-sound-offset (last (om/path recorded-sound)) new-x])
              (om/update-state! owner #(assoc % :x-offset new-x :mouse-down-pos [mouse-down-x old-y])))
             mouse-up-chan
             ([_] (om/set-state! owner :mouse-down false)))
           (recur))
         (om/update-state! owner #(assoc % :canvas-context canvas-context :canvas canvas))))
-
-    om/IWillUpdate
-    (will-update [_ _ {:keys [max-width canvas-width x-offset]}]
-      (let [clamp-x (.clamp goog.math x-offset 0 (- max-width canvas-width))]
-          (put! (:action-chan (om/get-shared owner))
-                [:set-recorded-sound-offset (om/path recorded-sound) clamp-x])
-          (om/set-state! owner :x-offset clamp-x)))
 
     om/IDidUpdate
     (did-update [_ _ _]
@@ -79,15 +69,17 @@
           (om/refresh! owner))))
 
     om/IRenderState
-    (render-state [_ {:keys [canvas-height mouse-down x-offset canvas-width]}]
-        (dom/canvas #js {:width       canvas-width
-                         :height      canvas-height
-                         :style       #js {:opacity 0.3 :position "absolute" :left x-offset
-                                           :cursor (if mouse-down "move" "default")}
-                         :ref         "canvas-ref"
-                         :onMouseDown (fn [e] (om/update-state! owner
-                                                #(assoc % :mouse-down true
-                                                          :mouse-down-pos [(.-clientX e) (.-clientY e)])))
-                         :onMouseOver #(om/set-state! owner :mouse-over true)
-                         :onMouseOut  #(om/set-state! owner :mouse-over false)}
-                    "no canvas"))))
+    (render-state [_ {:keys [canvas-height mouse-down x-offset canvas-width max-width]}]
+      (dom/canvas #js {:width       canvas-width
+                       :height      canvas-height
+                       :style       #js {:opacity 0.3
+                                         :position "absolute"
+                                         :left (.clamp goog.math x-offset 0 (- max-width canvas-width))
+                                         :cursor (if mouse-down "move" "default")}
+                       :ref         "canvas-ref"
+                       :onMouseDown (fn [e] (om/update-state! owner
+                                              #(assoc % :mouse-down true
+                                                        :mouse-down-pos [(.-clientX e) (.-clientY e)])))
+                       :onMouseOver #(om/set-state! owner :mouse-over true)
+                       :onMouseOut  #(om/set-state! owner :mouse-over false)}
+                  "no canvas"))))

@@ -3,6 +3,7 @@
             [om.dom :as dom :include-macros true]
             [cljs.core.async :refer [put!]]
             [web-audio-cljs.components.wave-selector :refer [wave-selector-view]]
+            [web-audio-cljs.state :refer [audio-context]]
             [web-audio-cljs.utils :refer [l min-arr-val max-arr-val
                                           lin-interp note-type->width
                                           recording-duration-sec]]))
@@ -21,7 +22,7 @@
               height (scale datum)]
           (.fillRect canvas-context i amp 1 height))))))
 
-(defn play-buffer [audio-context buffer-data offset duration]
+(defn play-buffer [buffer-data offset duration]
   (let [source (.createBufferSource audio-context)
         buffer (.createBuffer audio-context 1
                               (.-length buffer-data)
@@ -33,12 +34,12 @@
     (.start source 0 offset duration)))
 
 (defn play-audio-buffer-view
-  [{:keys [buffer-data audio-context play-offset play-duration]} owner]
+  [{:keys [buffer-data play-offset play-duration]} owner]
   (reify
     om/IDisplayName (display-name [_] "play-audio-buffer-view")
     om/IRender
     (render [_]
-      (dom/button #js {:onClick #(play-buffer audio-context buffer-data play-offset play-duration)}
+      (dom/button #js {:onClick #(play-buffer buffer-data play-offset play-duration)}
                   "Play"))))
 
 (defn make-button [disp-name on-click btn-label]
@@ -55,14 +56,14 @@
     (render [_]
       (dom/select #js {:onChange
                        #(put! (:action-chan (om/get-shared owner))
-                              [:set-recorded-sound-note-type (om/path recorded-sound) (.. % -target -value)])
+                              [:set-recorded-sound-note-type recorded-sound (.. % -target -value)])
                        :value (name (:current-note-type recorded-sound))}
         (dom/option #js {:value "eighth"} "Eighth")
         (dom/option #js {:value "quarter"} "Quarter")
         (dom/option #js {:value "half"} "Half")
         (dom/option #js {:value "whole"} "Whole")))))
 
-(defn audio-buffer-view [{:keys [recorded-sound] :as data} owner]
+(defn audio-buffer-view [{:keys [bpm recorded-sound]} owner]
   (reify
     om/IDisplayName (display-name [_] "audio-buffer-view")
     om/IInitState
@@ -75,23 +76,21 @@
     (did-mount [_]
       (let [{:keys [canvas-width canvas-height]} (om/get-state owner)
             sound-name (:name recorded-sound)
-            audio-buffer (:audio-buffer recorded-sound)
             canvas (om/get-node owner "canvas-ref")
             canvas-context (.getContext canvas "2d")]
-        (.log js/console "path: " (clj->js (om/path recorded-sound)))
-        (draw-buffer! canvas-width canvas-height canvas-context audio-buffer)))
+        (draw-buffer! canvas-width canvas-height canvas-context (:audio-buffer recorded-sound))))
 
     om/IRenderState
     (render-state [_ {:keys [canvas-width canvas-height current-note-type]}]
       (let [audio-buffer (:audio-buffer recorded-sound)
             selector-width (note-type->width (:current-note-type recorded-sound) canvas-width)
             selector-offset (:current-offset recorded-sound)
-            recording-length (recording-duration-sec (:bpm data))
+            recording-length (recording-duration-sec bpm)
             play-offset ((lin-interp 0 canvas-width 0 recording-length) selector-offset)
             play-duration (* (/ selector-width canvas-width) recording-length)
             new-play-sound-button (make-button "new-play-sound-button"
               #(put! (:action-chan (om/get-shared owner))
-                      [:new-play-sound (om/path recorded-sound)]) "Make Sound")]
+                      [:new-play-sound recorded-sound]) "Make Sound")]
             ;play-button (make-button "play-button-view" #(.log js/console "pushed") "Play")]
       (dom/div #js {:style #js {:position "relative"}}
 
@@ -112,5 +111,4 @@
         (om/build new-play-sound-button nil)
         (om/build play-audio-buffer-view {:buffer-data audio-buffer
                                           :play-offset play-offset
-                                          :play-duration play-duration
-                                          :audio-context (:audio-context data)}))))))
+                                          :play-duration play-duration}))))))

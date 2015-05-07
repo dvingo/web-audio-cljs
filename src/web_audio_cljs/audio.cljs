@@ -4,18 +4,6 @@
             [clojure.string :as string]
             [web-audio-cljs.utils :refer [l]]))
 
-(defn set-prop-if-undefined! [prop obj options]
-  (when-not (aget obj prop)
-    (let [opts (map #(aget obj %) options)
-          prop-to-use (first (filter #(not (nil? %)) opts))]
-      (aset obj prop prop-to-use))))
-(set-prop-if-undefined! "AudioContext" js/window ["AudioContext" "webkitAudioContext" "mozAudioContext"])
-(set-prop-if-undefined! "getUserMedia" js/navigator ["webkitGetUserMedia" "mozGetUserMedia"])
-(set-prop-if-undefined! "cancelAnimationFrame" js/window
-                        ["webkitCancelAnimationFrame" "mozCancelAnimationFrame"])
-(set-prop-if-undefined! "requestAnimationFrame" js/window
-                        ["webkitRequestAnimationFrame" "mozRequestAnimationFrame"])
-
 (defn clear-canvas! [canvas-context canvas-width canvas-height bg-color]
   (if (nil? bg-color)
     (.clearRect canvas-context 0 0 canvas-width canvas-height)

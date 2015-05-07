@@ -57,17 +57,3 @@
 
 (defn max-arr-val [arr]
   (superlative-of arr >))
-
-(defn indices-of [f coll]
-  (keep-indexed #(if (f %2) %1 nil) coll))
-
-(defn first-index-of [f coll]
-  (first (indices-of f coll)))
-
-(defn find-in [value coll]
-  (first-index-of #(= % value) coll))
-
-(defn get-val-with-index [prop value coll]
-  (let [mapped-coll (map #(prop %) coll)
-        index (find-in value mapped-coll)]
-    [(get coll index) index]))

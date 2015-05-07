@@ -41,6 +41,13 @@
       (dom/button #js {:onClick #(play-buffer audio-context buffer-data play-offset play-duration)}
                   "Play"))))
 
+(defn make-button [disp-name on-click btn-label]
+  (fn [data owner]
+    (reify
+      om/IDisplayName (display-name [_] disp-name)
+      om/IRender
+      (render [_] (dom/button #js {:onClick on-click} btn-label)))))
+
 (defn note-type-view [recorded-sound owner]
   (reify
     om/IDisplayName (display-name [_] "note-type-view")
@@ -48,7 +55,7 @@
     (render [_]
       (dom/select #js {:onChange
                        #(put! (:action-chan (om/get-shared owner))
-                              [:set-recorded-sound-note-type (:id recorded-sound) (.. % -target -value)])
+                              [:set-recorded-sound-note-type (om/path recorded-sound) (.. % -target -value)])
                        :value (name (:current-note-type recorded-sound))}
         (dom/option #js {:value "eighth"} "Eighth")
         (dom/option #js {:value "quarter"} "Quarter")
@@ -71,6 +78,7 @@
             audio-buffer (:audio-buffer recorded-sound)
             canvas (om/get-node owner "canvas-ref")
             canvas-context (.getContext canvas "2d")]
+        (.log js/console "path: " (clj->js (om/path recorded-sound)))
         (draw-buffer! canvas-width canvas-height canvas-context audio-buffer)))
 
     om/IRenderState
@@ -80,7 +88,11 @@
             selector-offset (:current-offset recorded-sound)
             recording-length (recording-duration-sec (:bpm data))
             play-offset ((lin-interp 0 canvas-width 0 recording-length) selector-offset)
-            play-duration (* (/ selector-width canvas-width) recording-length)]
+            play-duration (* (/ selector-width canvas-width) recording-length)
+            new-play-sound-button (make-button "new-play-sound-button"
+              #(put! (:action-chan (om/get-shared owner))
+                      [:new-play-sound (om/path recorded-sound)]) "Make Sound")]
+            ;play-button (make-button "play-button-view" #(.log js/console "pushed") "Play")]
       (dom/div #js {:style #js {:position "relative"}}
 
         (dom/div nil
@@ -92,12 +104,12 @@
                          :ref    "canvas-ref"}
                     "no canvas")
 
-        (om/build wave-selector-view data
-          {:state {:recorded-sound-id (:id recorded-sound)
-                   :x-offset selector-offset
+        (om/build wave-selector-view recorded-sound
+          {:state {:x-offset selector-offset
                    :canvas-width selector-width
                    :max-width canvas-width}})
 
+        (om/build new-play-sound-button nil)
         (om/build play-audio-buffer-view {:buffer-data audio-buffer
                                           :play-offset play-offset
                                           :play-duration play-duration

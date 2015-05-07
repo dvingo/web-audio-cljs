@@ -6,12 +6,12 @@
   (:import [goog.events EventType])
   (:require-macros [cljs.core.async.macros :refer [go go-loop alt!]]))
 
-(defn clamped-rel-mouse-pos [e min-x max-x {:keys [x-offset mouse-down-pos mouse-down]}]
+(defn clamped-rel-mouse-pos [e min-x max-x {:keys [x-offset mouse-down-pos mouse-down] :as d}]
   (if mouse-down
     (let [x (.-clientX e)
           [old-x old-y] mouse-down-pos
           new-x (+ x-offset (- x old-x))]
-      [(.clamp goog.math new-x min-x max-x) old-x old-y])))
+      [(.clamp goog.math new-x min-x max-x) x old-x old-y])))
 
 (defn draw-select-rect! [canvas-width canvas-height canvas-context mouse-down? mouse-over?]
   (.clearRect canvas-context 0 0 canvas-width canvas-height)
@@ -28,7 +28,7 @@
       (aset canvas-context "lineWidth" 2)
       (.strokeRect canvas-context 0 0 canvas-width canvas-height))))
 
-(defn wave-selector-view [data owner]
+(defn wave-selector-view [recorded-sound owner]
   (reify
     om/IDisplayName (display-name [_] "wave-selector-view")
 
@@ -42,32 +42,33 @@
 
     om/IDidMount
     (did-mount [_]
-      (let [{:keys [canvas-height left-x recorded-sound-id]} (om/get-state owner)
+      (let [{:keys [canvas-height left-x]} (om/get-state owner)
             canvas (om/get-node owner "canvas-ref")
             canvas-context (.getContext canvas "2d")
-            mouse-move-chan (listen js/document (.-MOUSEMOVE EventType))
+            mouse-move-chan (listen js/document (.-MOUSEMOVE EventType)
+                                    (comp (filter #(:mouse-down (om/get-state owner)))
+                                          (map #(let [{:keys [max-width canvas-width]} (om/get-state owner)]
+                                             (clamped-rel-mouse-pos % 0
+                                                (- max-width canvas-width) (om/get-state owner))))))
             mouse-up-chan (listen js/document (.-MOUSEUP EventType))]
         (go-loop []
           (alt!
             mouse-move-chan
-            ([v]
-              (when-let [[clamp-x _ old-y]
-                 (let [{:keys [max-width canvas-width]} (om/get-state owner)]
-                   (clamped-rel-mouse-pos v 0 (- max-width canvas-width) (om/get-state owner)))]
-                (>! (:action-chan (om/get-shared owner))
-                    [:set-recorded-sound-offset recorded-sound-id clamp-x])
-                (om/update-state! owner #(assoc % :x-offset clamp-x :mouse-down-pos [(.-clientX v) old-y]))))
+            ([[new-x mouse-down-x _ old-y]]
+             (>! (:action-chan (om/get-shared owner))
+                 [:set-recorded-sound-offset (om/path recorded-sound) new-x])
+             (om/update-state! owner #(assoc % :x-offset new-x :mouse-down-pos [mouse-down-x old-y])))
             mouse-up-chan
             ([_] (om/set-state! owner :mouse-down false)))
           (recur))
         (om/update-state! owner #(assoc % :canvas-context canvas-context :canvas canvas))))
 
     om/IWillUpdate
-    (will-update [_ _ {:keys [recorded-sound-id max-width canvas-width x-offset]}]
+    (will-update [_ _ {:keys [max-width canvas-width x-offset]}]
       (let [clamp-x (.clamp goog.math x-offset 0 (- max-width canvas-width))]
-        (put! (:action-chan (om/get-shared owner))
-              [:set-recorded-sound-offset recorded-sound-id clamp-x])
-        (om/set-state! owner :x-offset clamp-x)))
+          (put! (:action-chan (om/get-shared owner))
+                [:set-recorded-sound-offset (om/path recorded-sound) clamp-x])
+          (om/set-state! owner :x-offset clamp-x)))
 
     om/IDidUpdate
     (did-update [_ _ _]

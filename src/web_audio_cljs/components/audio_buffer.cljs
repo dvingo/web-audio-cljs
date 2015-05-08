@@ -91,7 +91,7 @@
             new-play-sound-button (make-button "new-play-sound-button"
               #(put! (:action-chan (om/get-shared owner))
                       [:new-play-sound recorded-sound]) "Make Sound")]
-            ;play-button (make-button "play-button-view" #(.log js/console "pushed") "Play")]
+
       (dom/div #js {:style #js {:position "relative"}}
 
         (dom/div nil

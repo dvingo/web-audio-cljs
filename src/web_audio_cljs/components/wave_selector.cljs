@@ -2,7 +2,8 @@
   (:require [cljs.core.async :refer [>! put!]]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
-            [web-audio-cljs.utils :refer [listen note-type->width]])
+            [web-audio-cljs.utils :refer [listen]]
+            [web-audio-cljs.state :refer [wave-width]])
   (:import [goog.events EventType])
   (:require-macros [cljs.core.async.macros :refer [go go-loop alt!]]))
 
@@ -52,9 +53,11 @@
           (alt!
             mouse-move-chan
             ([[new-x mouse-down-x _ old-y]]
+             (let [clamp-x
+                   (.clamp goog.math new-x 0 (- wave-width (:canvas-width (om/get-state owner))))]
              (>! (:action-chan (om/get-shared owner))
-                 [:set-recorded-sound-offset (last (om/path recorded-sound)) new-x])
-             (om/update-state! owner #(assoc % :x-offset new-x :mouse-down-pos [mouse-down-x old-y])))
+                 [:set-recorded-sound-offset (last (om/path recorded-sound)) clamp-x])
+             (om/update-state! owner #(assoc % :x-offset clamp-x :mouse-down-pos [mouse-down-x old-y]))))
             mouse-up-chan
             ([_] (om/set-state! owner :mouse-down false)))
           (recur))
@@ -74,7 +77,7 @@
                        :height      canvas-height
                        :style       #js {:opacity 0.3
                                          :position "absolute"
-                                         :left (.clamp goog.math x-offset 0 (- max-width canvas-width))
+                                         :left x-offset
                                          :cursor (if mouse-down "move" "default")}
                        :ref         "canvas-ref"
                        :onMouseDown (fn [e] (om/update-state! owner

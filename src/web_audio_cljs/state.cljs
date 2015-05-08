@@ -2,8 +2,11 @@
   (:require [om.core :as om :include-macros true]
             [cljs-uuid.core :as uuid]
             [cljs.core.async :refer [put! chan timeout <! >! onto-chan]]
-            [cljs.core.match :refer-macros [match]])
+            [cljs.core.match :refer-macros [match]]
+            [web-audio-cljs.utils :refer [note-type->width]])
   (:require-macros [cljs.core.async.macros :refer [go-loop]]))
+
+(def wave-width 400)
 
 (let [db {:compositions []
           :tracks []
@@ -62,7 +65,9 @@
 
 (defn handle-update-recorded-sound-note-type [app-state recorded-sound note-type]
   (let [i (last (om/path recorded-sound))
-        new-recorded-sound (assoc recorded-sound :current-note-type note-type)]
+        current-selector-width (note-type->width note-type wave-width)
+        x-offset (.clamp goog.math (:current-offset recorded-sound) 0 (- wave-width current-selector-width))
+        new-recorded-sound (assoc recorded-sound :current-note-type note-type :current-offset x-offset)]
     (om/transact! (recorded-sounds) #(assoc % i new-recorded-sound))))
 
 (defn handle-update-recorded-sound-offset [rec-sound-idx x-offset]

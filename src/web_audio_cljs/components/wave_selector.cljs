@@ -8,10 +8,20 @@
   (:require-macros [cljs.core.async.macros :refer [go go-loop alt!]]))
 
 (defn rel-mouse-pos [e {:keys [x-offset mouse-down-pos]}]
-  (let [x (.-clientX e)
-        [old-x old-y] mouse-down-pos
-        new-x (+ x-offset (- x old-x))]
-    [new-x x old-x old-y]))
+  "Function to get updated position of overlay rectangle x position
+  and where the mouse down is. These two values are different because
+  you can drag from anywhere 'inside' the overlay rectangle.
+  e is a mouse-move event.
+  x-offset is the current position of the left edge of
+  the selector canvas element.
+  mouse-down-pos is the previous location of where the mouse way dragged from.
+  The new mouse-down position will become current-mouse-x.
+  new-x will be where the overlay rectangle's left edge is."
+  (let [current-mouse-x (.-clientX e)
+        [previous-x previous-y] mouse-down-pos
+        x-delta (- current-mouse-x previous-x)
+        new-x (+ x-offset x-delta)]
+    [new-x current-mouse-x previous-x previous-y]))
 
 (defn draw-select-rect! [canvas-width canvas-height canvas-context mouse-down? mouse-over?]
   (.clearRect canvas-context 0 0 canvas-width canvas-height)
@@ -28,7 +38,7 @@
       (aset canvas-context "lineWidth" 2)
       (.strokeRect canvas-context 0 0 canvas-width canvas-height))))
 
-(defn wave-selector-view [recorded-sound owner]
+(defn wave-selector-view [sound owner]
   (reify
     om/IDisplayName (display-name [_] "wave-selector-view")
 
@@ -56,7 +66,7 @@
              (let [clamp-x
                    (.clamp goog.math new-x 0 (- wave-width (:canvas-width (om/get-state owner))))]
              (>! (:action-chan (om/get-shared owner))
-                 [:set-recorded-sound-offset (last (om/path recorded-sound)) clamp-x])
+                 [:set-sound-offset (last (om/path sound)) clamp-x])
              (om/update-state! owner #(assoc % :x-offset clamp-x :mouse-down-pos [mouse-down-x old-y]))))
             mouse-up-chan
             ([_] (om/set-state! owner :mouse-down false)))

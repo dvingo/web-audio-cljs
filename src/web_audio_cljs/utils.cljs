@@ -5,17 +5,6 @@
 
 (defn l [& args] (.log js/console " " (string/join args)))
 
-(defn note-type->width [note-type max-width]
-  (case (str note-type)
-    "eighth" (/ max-width 8)
-    ":eighth" (/ max-width 8)
-    "quarter" (/ max-width 4)
-    ":quarter" (/ max-width 4)
-    "half" (/ max-width 2)
-    ":half" (/ max-width 2)
-    "whole" max-width
-    ":whole" max-width))
-
 (defn recording-duration [bpm]
   "Length of a quarter note in milliseconds."
   (* (/ bpm 60) 1000))

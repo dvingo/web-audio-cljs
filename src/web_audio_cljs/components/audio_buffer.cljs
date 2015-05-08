@@ -3,9 +3,10 @@
             [om.dom :as dom :include-macros true]
             [cljs.core.async :refer [put!]]
             [web-audio-cljs.components.wave-selector :refer [wave-selector-view]]
-            [web-audio-cljs.state :refer [audio-context]]
+            [web-audio-cljs.state :refer [audio-context wave-width wave-height
+                                          note-type->width note-types]]
             [web-audio-cljs.utils :refer [l min-arr-val max-arr-val
-                                          lin-interp note-type->width
+                                          lin-interp
                                           recording-duration-sec]]))
 
 (defn draw-buffer! [width height canvas-context data]
@@ -49,66 +50,62 @@
       om/IRender
       (render [_] (dom/button #js {:onClick on-click} btn-label)))))
 
-(defn note-type-view [recorded-sound owner]
+(defn note-type-view [sound owner]
   (reify
     om/IDisplayName (display-name [_] "note-type-view")
     om/IRender
     (render [_]
-      (dom/select #js {:onChange
+      (apply dom/select #js {:onChange
                        #(put! (:action-chan (om/get-shared owner))
-                              [:set-recorded-sound-note-type recorded-sound (.. % -target -value)])
-                       :value (name (:current-note-type recorded-sound))}
-        (dom/option #js {:value "eighth"} "Eighth")
-        (dom/option #js {:value "quarter"} "Quarter")
-        (dom/option #js {:value "half"} "Half")
-        (dom/option #js {:value "whole"} "Whole")))))
+                              [:set-sound-note-type sound (.. % -target -value)])
+                       :value (:current-note-type sound)}
+        (map #(dom/option #js {:value %} %) note-types)))))
 
-(defn audio-buffer-view [{:keys [bpm recorded-sound]} owner]
+(defn audio-buffer-view [{:keys [bpm sound]} owner]
   (reify
     om/IDisplayName (display-name [_] "audio-buffer-view")
     om/IInitState
     (init-state [_] {:canvas nil
                      :canvas-context nil
-                     :canvas-width 400
-                     :canvas-height 100
                      :current-note-type :quarter})
     om/IDidMount
     (did-mount [_]
-      (let [{:keys [canvas-width canvas-height]} (om/get-state owner)
-            sound-name (:name recorded-sound)
+      (let [sound-name (:name sound)
             canvas (om/get-node owner "canvas-ref")
             canvas-context (.getContext canvas "2d")]
-        (draw-buffer! canvas-width canvas-height canvas-context (:audio-buffer recorded-sound))))
+        (draw-buffer! wave-width wave-height canvas-context (:audio-buffer sound))))
 
     om/IRenderState
-    (render-state [_ {:keys [canvas-width canvas-height current-note-type]}]
-      (let [audio-buffer (:audio-buffer recorded-sound)
-            selector-width (note-type->width (:current-note-type recorded-sound) canvas-width)
-            selector-offset (:current-offset recorded-sound)
+    (render-state [_ {:keys [current-note-type]}]
+      (.log js/console "(:current-note-type sound): " (:current-note-type sound))
+      (.log js/console "(get note-type->width (:current-note-type sound)): "(get note-type->width (:current-note-type sound)))
+      (let [audio-buffer (:audio-buffer sound)
+            selector-width (get note-type->width (:current-note-type sound))
+            selector-offset (:current-offset sound)
             recording-length (recording-duration-sec bpm)
-            play-offset ((lin-interp 0 canvas-width 0 recording-length) selector-offset)
-            play-duration (* (/ selector-width canvas-width) recording-length)
-            new-play-sound-button (make-button "new-play-sound-button"
+            play-offset ((lin-interp 0 wave-width 0 recording-length) selector-offset)
+            play-duration (* (/ selector-width wave-width) recording-length)
+            make-sample-button (make-button "make-sample-button"
               #(put! (:action-chan (om/get-shared owner))
-                      [:new-play-sound recorded-sound]) "Make Sound")]
+                      [:new-sample sound]) "Make Sample")]
 
       (dom/div #js {:style #js {:position "relative"}}
 
         (dom/div nil
-          (dom/h3 #js {:style #js {:display "inline-block" :marginRight "1em"}} (:name recorded-sound))
-          (om/build note-type-view recorded-sound))
+          (dom/h3 #js {:style #js {:display "inline-block" :marginRight "1em"}} (:name sound))
+          (om/build note-type-view sound))
 
-        (dom/canvas #js {:width  canvas-width
-                         :height canvas-height
+        (dom/canvas #js {:width  wave-width
+                         :height wave-height
                          :ref    "canvas-ref"}
                     "no canvas")
 
-        (om/build wave-selector-view recorded-sound
+        (om/build wave-selector-view sound
           {:state {:x-offset selector-offset
                    :canvas-width selector-width
-                   :max-width canvas-width}})
+                   :max-width wave-width}})
 
-        (om/build new-play-sound-button nil)
+        (om/build make-sample-button nil)
         (om/build play-audio-buffer-view {:buffer-data audio-buffer
                                           :play-offset play-offset
                                           :play-duration play-duration}))))))

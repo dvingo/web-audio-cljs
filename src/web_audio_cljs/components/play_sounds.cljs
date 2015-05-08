@@ -1,4 +1,4 @@
-(ns web-audio-cljs.components.play-sounds)
+(ns web-audio-cljs.components.sounds)
   ;(:require [om.core :as om :include-macros true]
             ;[om.dom :as dom :include-macros true]
             ;[web-audio-cljs.state :refer [play-sounds]]

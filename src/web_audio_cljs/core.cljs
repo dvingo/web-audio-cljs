@@ -60,13 +60,13 @@
 
 (defn got-stream [stream]
   (reset! got-audio? true)
-  (let [audio-input (.createMediaStreamSource audio-context stream)]
-    (let [analyser-node (.createAnalyser audio-context)]
+  (let [audio-input (.createMediaStreamSource audio-context stream)
+        analyser-node (.createAnalyser audio-context)]
       (set! (.-fftSize analyser-node) 2048)
       (.connect audio-input analyser-node)
       (swap! app-state assoc :audio-recorder (js/Recorder. audio-input)
                              :analyser-node analyser-node)
-      (mount-om-root))))
+      (mount-om-root)))
 
 (when-not @got-audio?
   (let [audio-constraints (clj->js { "audio" { "mandatory" { "googEchoCancellation" "false"

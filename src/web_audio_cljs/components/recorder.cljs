@@ -2,7 +2,6 @@
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [cljs.core.async :refer [>! <! timeout]]
-            [web-audio-cljs.state :refer [save-recording!]]
             [web-audio-cljs.utils :refer [recording-duration]])
   (:require-macros [cljs.core.async.macros :refer [go]]))
 

@@ -50,9 +50,6 @@
         r (* (/ canvas-width 2) (/ max-val 256))
         center-x (/ canvas-width 2)
         center-y center-x]
-    ;(when (< n 100)
-      ;(aset js/window "freqData" freq-byte-data)
-      ;(.log js/console "freq-byte-data: " freq-byte-data))
     (clear-canvas! canvas-context canvas-width canvas-height nil)
     (.beginPath canvas-context)
     (.arc canvas-context center-x center-y r 0 (* 2 (.-PI js/Math)) false)

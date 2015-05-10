@@ -1,20 +1,12 @@
 (ns ^:figwheel-always web-audio-cljs.core
   (:require [cljs.core.async :refer [chan]]
-            [cljs-uuid.core :as uuid]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
-            [web-audio-cljs.audio :as audio]
-            [web-audio-cljs.state :refer [actions-handler app-state audio-context]]
-            [web-audio-cljs.components.audio-buffer-list :refer [buffers-list-view]]
-            [web-audio-cljs.components.recorder :refer [recorder-view]]))
+            [web-audio-cljs.state :refer [start-actions-handler app-state audio-context]]
+            [web-audio-cljs.utils :refer [set-prop-if-undefined!]]
+            [web-audio-cljs.components.main :refer [main-view]]))
 
 (enable-console-print!)
-
-(defn set-prop-if-undefined! [prop obj options]
-  (when-not (aget obj prop)
-    (let [opts (map #(aget obj %) options)
-          prop-to-use (first (filter #(not (nil? %)) opts))]
-      (aset obj prop prop-to-use))))
 
 (set-prop-if-undefined! "AudioContext" js/window ["AudioContext" "webkitAudioContext" "mozAudioContext"])
 (set-prop-if-undefined! "getUserMedia" js/navigator ["webkitGetUserMedia" "mozGetUserMedia"])
@@ -35,27 +27,6 @@
                         {:id sample-id3 :sound sound-id3 :type :half :offset 8998}
                         {:id sample-id4 :sound sound-id4 :type :eighth :offset 998}]}
 
-(defn play-sound [context sound-data]
-  (let [audio-tag (.getElementById js/document "play-sound")]
-    (aset audio-tag "src" (.createObjectURL js/window.URL sound-data))))
-
-(defn mount-om-root []
-  (om/root
-    (fn [data owner]
-      (reify
-        om/IWillMount
-        (will-mount [_]
-          (actions-handler (:action-chan (om/get-shared owner)) data))
-        om/IRender
-        (render [_]
-          (dom/div nil
-            (om/build recorder-view data)
-            (om/build buffers-list-view data)
-            (om/build audio/chart-view data)))))
-    app-state
-    {:shared {:action-chan (chan)}
-     :target (. js/document (getElementById "app"))}))
-
 (defonce got-audio? (atom false))
 
 (defn got-stream [stream]
@@ -66,7 +37,9 @@
       (.connect audio-input analyser-node)
       (swap! app-state assoc :audio-recorder (js/Recorder. audio-input)
                              :analyser-node analyser-node)
-      (mount-om-root)))
+    (om/root main-view app-state
+             {:shared {:action-chan (chan)}
+              :target (. js/document (getElementById "app"))})))
 
 (when-not @got-audio?
   (let [audio-constraints (clj->js { "audio" { "mandatory" { "googEchoCancellation" "false"

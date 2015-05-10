@@ -41,9 +41,8 @@
 (defn min-of-array [array-of-nums]
   (.apply js/Math.min nil array-of-nums))
 
-(defn draw-circle! [canvas-el freq-byte-data n]
-  (let [canvas canvas-el
-        canvas-context (.getContext canvas "2d")
+(defn draw-circle! [canvas freq-byte-data n]
+  (let [canvas-context (.getContext canvas "2d")
         canvas-width (.-width canvas)
         canvas-height (.-height canvas)
         max-val (max-of-array freq-byte-data)
@@ -55,55 +54,3 @@
     (.arc canvas-context center-x center-y r 0 (* 2 (.-PI js/Math)) false)
     (aset canvas-context "fillStyle" "red")
     (.fill canvas-context)))
-
-(defn chart-view [{:keys [analyser-node] :as data} owner]
-  (reify
-    om/IDisplayName (display-name [_] "chart")
-
-    om/IInitState
-    (init-state [_]
-        {:canvas nil
-         :recording-canvas nil
-         :canvas-context nil
-         :canvas-width nil
-         :canvas-height nil
-         :spacing 3
-         :bar-width 1
-         :n 0
-         :num-bars nil
-         :freq-byte-data nil
-         :multiplier nil})
-
-    om/IDidMount
-    (did-mount [_]
-      (let [{:keys [spacing]} (om/get-state owner)
-            canvas (.getElementById js/document "display")
-            recording-canvas (.getElementById js/document "recording")
-            canvas-context (.getContext canvas "2d")
-            canvas-width (.-width canvas)
-            canvas-height (.-height canvas)
-            num-bars (.round js/Math (/ canvas-width spacing))
-            {:keys [freq-byte-data multiplier]} (get-time-domain-data analyser-node num-bars)]
-        (om/update-state! owner #(assoc %
-                                        :canvas canvas
-                                        :canvas-context canvas-context
-                                        :recording-canvas recording-canvas
-                                        :canvas-width canvas-width
-                                        :canvas-height canvas-height
-                                        :num-bars num-bars
-                                        :freq-byte-data freq-byte-data
-                                        :multiplier multiplier))))
-
-    om/IDidUpdate
-    (did-update [_ prev-props prev-state]
-      (let [{:keys [recording-canvas canvas-context canvas-width canvas-height num-bars spacing bar-width n]} (om/get-state owner)
-            {:keys [freq-byte-data multiplier]} (get-time-domain-data analyser-node num-bars)]
-        (.getByteFrequencyData analyser-node freq-byte-data)
-        (when canvas-context
-          (draw-circle! recording-canvas freq-byte-data n)
-          (draw-bars! canvas-context canvas-width canvas-height spacing
-                      num-bars multiplier freq-byte-data bar-width))
-        (om/update-state! owner #(assoc % :freq-byte-data freq-byte-data :multiplier multiplier :n (inc n)))))
-
-    om/IRender
-    (render [_] nil)))

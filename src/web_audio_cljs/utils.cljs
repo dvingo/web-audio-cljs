@@ -46,3 +46,14 @@
 
 (defn max-arr-val [arr]
   (superlative-of arr >))
+
+(defn max-of-array [array-of-nums]
+  (.apply js/Math.max nil array-of-nums))
+(defn min-of-array [array-of-nums]
+  (.apply js/Math.min nil array-of-nums))
+
+(defn set-prop-if-undefined! [prop obj options]
+  (when-not (aget obj prop)
+    (let [opts (map #(aget obj %) options)
+          prop-to-use (first (filter #(not (nil? %)) opts))]
+      (aset obj prop prop-to-use))))

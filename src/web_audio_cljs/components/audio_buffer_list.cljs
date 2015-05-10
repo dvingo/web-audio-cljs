@@ -10,5 +10,5 @@
     om/IRender
     (render [_]
       (let [snds (om/observe owner (sounds))]
-        (apply dom/div {:className "buffers-list"}
+        (apply dom/div #js {:className "buffers-list" :style #js {:width "50%" :float "left"}}
           (map #(om/build audio-buffer-view {:sound % :bpm bpm}) snds))))))

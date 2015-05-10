@@ -3,7 +3,7 @@ body {
   margin: 40px auto;
   max-width: 1024px;
 
-  font-family: sans-serif;
+  font-family: "Montserrat", sans-serif;
   font-size: 18px;
   line-height: 1.6;
 
@@ -48,4 +48,38 @@ body {
 @-webkit-keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+.samples {
+   width: 50%;
+   float: left;
+   display: flex;
+   flex-flow: row wrap;
+   justify-content: flex-start;
+}
+
+
+
+.sample {
+  position: relative;
+  margin: 8px;
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.sample .name  {
+  line-height: 1em;
+  margin: 0;
+  padding: 0;
+  word-wrap: break-word;
+  font-family: Raleway, sans-serif;
+  font-size: 1em;
+  font-weight: 700;
+}
+.sample .note-type {
+  position: absolute;
+  top: -20px;
+  right: 10px;
+  color: mediumaquamarine;
 }

@@ -7,6 +7,8 @@
 
 (def wave-width 400)
 (def wave-height 100)
+(def sample-width 80)
+(def sample-height 80)
 
 (def note-type->width
   {"Eighth"  (/ wave-width 8)
@@ -14,6 +16,28 @@
    "Half"    (/ wave-width 2)
    "Whole"   wave-width})
 (def note-types (keys note-type->width))
+
+(def note-type->bg-color
+  {"Eighth" "midnightblue"
+   "Quarter" "darkorchid"
+   "Half" "darksalmon"
+   "Whole" "peachpuff"})
+
+(def note-type->color
+  {"Eighth" "blanchedalmond"
+   "Quarter" "blanchedalmond"
+   "Half" "blanchedalmond"
+   "Whole" "mediumpurple"})
+
+(def note-type->arc
+  {"Eighth" "M .5 1 A .5 .5, 0, 0, 0, .75 .95 L .5 .5 Z"
+   "Quarter" "M .5 1 A .5 .5, 0, 0, 0, 1 .5 L .5 .5 Z"
+   "Half" "M .5 1 A .5 .5, 0, 0, 0, .5 0 Z"})
+
+(def note-type->rotate-path
+  {"Eighth" "rotate(-150 .5 .5)"
+   "Quarter" "rotate(-90 .5  .5)"
+   "Half" ""})
 
 (let [db {:compositions []
           :tracks []
@@ -85,7 +109,7 @@
 (defn handle-new-sample [app-state sound]
   (om/transact! (samples) #(conj % (make-new-sample sound))))
 
-(defn actions-handler [actions-chan app-state]
+(defn start-actions-handler [actions-chan app-state]
   (go-loop [action-vec (<! actions-chan)]
      (match [action-vec]
        [[:toggle-recording sound-name]] (handle-toggle-recording app-state sound-name)

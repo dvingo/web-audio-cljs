@@ -77,8 +77,6 @@
 
     om/IRenderState
     (render-state [_ {:keys [current-note-type]}]
-      (.log js/console "(:current-note-type sound): " (:current-note-type sound))
-      (.log js/console "(get note-type->width (:current-note-type sound)): "(get note-type->width (:current-note-type sound)))
       (let [audio-buffer (:audio-buffer sound)
             selector-width (get note-type->width (:current-note-type sound))
             selector-offset (:current-offset sound)
@@ -105,7 +103,8 @@
                    :canvas-width selector-width
                    :max-width wave-width}})
 
+               (dom/div nil
         (om/build make-sample-button nil)
         (om/build play-audio-buffer-view {:buffer-data audio-buffer
                                           :play-offset play-offset
-                                          :play-duration play-duration}))))))
+                                          :play-duration play-duration})))))))

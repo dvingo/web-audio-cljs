@@ -4,6 +4,7 @@
             [web-audio-cljs.state :refer [start-actions-handler]]
             [web-audio-cljs.components.audio-buffer-list :refer [buffers-list-view]]
             [web-audio-cljs.components.samples :refer [samples-view]]
+            [web-audio-cljs.components.tracks :refer [tracks-view]]
             [web-audio-cljs.components.chart :refer [chart-view]]
             [web-audio-cljs.components.recorder :refer [recorder-view]]))
 
@@ -15,7 +16,9 @@
     om/IRender
     (render [_]
       (dom/div nil
-               (om/build recorder-view data)
-               (om/build buffers-list-view data)
-               (om/build samples-view data)
-               (om/build chart-view data)))))
+        (om/build recorder-view data)
+        (dom/div #js {:className "middle-views"}
+          (om/build buffers-list-view data)
+          (om/build samples-view data))
+        (om/build tracks-view data)
+        (om/build chart-view data)))))

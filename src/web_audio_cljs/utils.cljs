@@ -1,5 +1,7 @@
 (ns web-audio-cljs.utils
-  (:require [clojure.string :as string]
+  (:require [om.core :as om :include-macros true]
+            [om.dom :as dom :include-macros true]
+            [clojure.string :as string]
             [cljs.core.async :refer [put! chan]]
             [goog.events :as events]))
 
@@ -49,6 +51,7 @@
 
 (defn max-of-array [array-of-nums]
   (.apply js/Math.max nil array-of-nums))
+
 (defn min-of-array [array-of-nums]
   (.apply js/Math.min nil array-of-nums))
 
@@ -57,3 +60,10 @@
     (let [opts (map #(aget obj %) options)
           prop-to-use (first (filter #(not (nil? %)) opts))]
       (aset obj prop prop-to-use))))
+
+(defn make-button [disp-name on-click btn-label]
+  (fn [data owner]
+    (reify
+      om/IDisplayName (display-name [_] disp-name)
+      om/IRender
+      (render [_] (dom/button #js {:onClick on-click} btn-label)))))

@@ -6,7 +6,7 @@
             [web-audio-cljs.state :refer [audio-context wave-width wave-height
                                           note-type->width note-types]]
             [web-audio-cljs.utils :refer [l min-arr-val max-arr-val
-                                          lin-interp
+                                          lin-interp make-button
                                           recording-duration-sec]]))
 
 (defn draw-buffer! [width height canvas-context data]
@@ -23,7 +23,7 @@
               height (scale datum)]
           (.fillRect canvas-context i amp 1 height))))))
 
-(defn play-buffer [buffer-data offset duration]
+(defn play-buffer! [buffer-data offset duration]
   (let [source (.createBufferSource audio-context)
         buffer (.createBuffer audio-context 1
                               (.-length buffer-data)
@@ -33,22 +33,6 @@
     (aset source "buffer" buffer)
     (.connect source (.-destination audio-context))
     (.start source 0 offset duration)))
-
-(defn play-audio-buffer-view
-  [{:keys [buffer-data play-offset play-duration]} owner]
-  (reify
-    om/IDisplayName (display-name [_] "play-audio-buffer-view")
-    om/IRender
-    (render [_]
-      (dom/button #js {:onClick #(play-buffer buffer-data play-offset play-duration)}
-                  "Play"))))
-
-(defn make-button [disp-name on-click btn-label]
-  (fn [data owner]
-    (reify
-      om/IDisplayName (display-name [_] disp-name)
-      om/IRender
-      (render [_] (dom/button #js {:onClick on-click} btn-label)))))
 
 (defn note-type-view [sound owner]
   (reify
@@ -85,7 +69,9 @@
             play-duration (* (/ selector-width wave-width) recording-length)
             make-sample-button (make-button "make-sample-button"
               #(put! (:action-chan (om/get-shared owner))
-                      [:new-sample sound]) "Make Sample")]
+                      [:new-sample sound]) "Make Sample")
+            play-button (make-button "play-audio-buffer-view"
+              #(play-buffer! audio-buffer play-offset play-duration) "Play")]
 
       (dom/div #js {:style #js {:position "relative"}}
 
@@ -102,9 +88,6 @@
           {:state {:x-offset selector-offset
                    :canvas-width selector-width
                    :max-width wave-width}})
-
-               (dom/div nil
-        (om/build make-sample-button nil)
-        (om/build play-audio-buffer-view {:buffer-data audio-buffer
-                                          :play-offset play-offset
-                                          :play-duration play-duration})))))))
+        (dom/div nil
+          (om/build make-sample-button nil)
+          (om/build play-button nil)))))))

@@ -2,8 +2,7 @@
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [web-audio-cljs.state :refer [samples]]
-            [web-audio-cljs.components.sample :refer [sample-view]]
-            [cljs.core.async :refer [put!]]))
+            [web-audio-cljs.components.sample :refer [sample-view]]))
 
 (defn samples-view [_ owner]
   (reify

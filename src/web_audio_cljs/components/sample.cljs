@@ -4,16 +4,34 @@
             [web-audio-cljs.state :refer [sample-width sample-height
                                           note-type->bg-color
                                           note-type->color
-                                          note-type->arc note-type->rotate-path]]
+                                          note-type->num]]
             [cljs.core.async :refer [put!]]))
 
-(def fill-color "white")
+(def fill-color "lavender")
+(def stroke-color "linen")
+(def circle-radius 0.5)
+(def stroke-width ".08px")
+
+(defn x-from-angle [angle r]
+  (+ (* (js/Math.cos angle) r) r))
+
+(defn y-from-angle [angle r]
+  (+ (* (js/Math.sin angle) r) r))
+
+(defn arc-path [r x y]
+  (apply str
+    "M " r " " r
+   " l " r " " 0
+   " A " r ", " r " 0, 0, 1, " x ", " y " z"))
 
 (defn sample-view [sample owner]
   (reify
     om/IDisplayName (display-name [_] "sample-view")
     om/IRender (render [_]
-                 (let [note-type (:type sample)]
+                 (let [note-type (:type sample)
+                       theta (/ (* 2 js/Math.PI) (note-type->num note-type))
+                       x (x-from-angle theta circle-radius)
+                       y (y-from-angle theta circle-radius)]
                    (dom/div #js {:className "sample"
                                  :style #js
                                  {:width sample-width
@@ -23,15 +41,17 @@
                                   :padding (/ sample-width 10)
                                   :borderRadius (/ sample-width 10)}}
                           (dom/p #js {:className "name"} (:name sample))
-                            (dom/svg #js {:viewBox "0 0 1 1" :width "20"
-                                         :style #js {:position "absolute" :top "10px" :right "10px"}}
-                                     (when (= note-type "Whole")
-                                       (dom/circle #js {:cx ".5" :cy ".5" :r ".5" :strokeWidth ".01px" :stroke fill-color :fill fill-color}))
-
-                                     (when-not (= note-type "Whole")
-                                         (dom/circle #js {:cx ".5" :cy ".5" :r ".5" :strokeWidth ".01px" :stroke fill-color :fill "none"}))
-                                     (when-not (= note-type "Whole")
-                                         (dom/path #js {:d (get note-type->arc note-type) :fill fill-color
-                                                          :transform (get note-type->rotate-path note-type)})))
-                          #_(dom/h5 #js {:className "note-type"}
-                                  (first note-type)))))))
+                          (apply dom/svg #js {:viewBox "0 0 1 1"
+                                              :width "20"
+                                              :style #js {:position "absolute"
+                                                          :top "4px"
+                                                          :right "4px"
+                                                          :padding "4px"}}
+                             (if (= note-type "Whole")
+                               [(dom/circle #js {:cx ".5" :cy ".5" :r circle-radius
+                                                 :strokeWidth stroke-width :stroke stroke-color :fill fill-color})]
+                               [(dom/circle #js {:cx ".5" :cy ".5" :r circle-radius
+                                                 :strokeWidth stroke-width :stroke stroke-color :fill "none"})
+                                (dom/path #js {:d (arc-path circle-radius x y)
+                                               :fill fill-color
+                                               :transform (str "rotate(270,"circle-radius","circle-radius")")})])))))))

@@ -10,15 +10,19 @@
 (def sample-width 80)
 (def sample-height 80)
 
+(def note-type->num
+  {"Eighth" 8 "Quarter" 4 "Half" 2 "Whole" 1})
+
 (def note-type->width
   {"Eighth"  (/ wave-width 8)
    "Quarter" (/ wave-width 4)
    "Half"    (/ wave-width 2)
    "Whole"   wave-width})
+
 (def note-types (keys note-type->width))
 
 (def note-type->bg-color
-  {"Eighth" "midnightblue"
+  {"Eighth" "mediumvioletred"
    "Quarter" "darkorchid"
    "Half" "darksalmon"
    "Whole" "peachpuff"})
@@ -29,16 +33,6 @@
    "Half" "blanchedalmond"
    "Whole" "mediumpurple"})
 
-(def note-type->arc
-  {"Eighth" "M .5 1 A .5 .5, 0, 0, 0, .75 .95 L .5 .5 Z"
-   "Quarter" "M .5 1 A .5 .5, 0, 0, 0, 1 .5 L .5 .5 Z"
-   "Half" "M .5 1 A .5 .5, 0, 0, 0, .5 0 Z"})
-
-(def note-type->rotate-path
-  {"Eighth" "rotate(-150 .5 .5)"
-   "Quarter" "rotate(-90 .5  .5)"
-   "Half" ""})
-
 (let [db {:compositions []
           :tracks []
           :sounds []
@@ -46,7 +40,8 @@
           :analyser-node nil
           :audio-recorder nil
           :is-recording false
-          :bpm 120}]
+          :bpm 120
+          :ui {:buffers-visible true}}]
 
   (defonce app-state (atom db)))
 
@@ -57,6 +52,9 @@
 
 (defn sounds []
   (om/ref-cursor (:sounds (om/root-cursor app-state))))
+
+(defn tracks []
+  (om/ref-cursor (:tracks (om/root-cursor app-state))))
 
 (defn make-new-sound [audio-buffer sound-name]
   {:id (uuid/make-random)
@@ -83,6 +81,11 @@
    :type (:current-note-type sound)
    :sound (:id sound)})
 
+(defn make-new-track []
+  {:id (uuid/make-random)
+   :name nil
+   :samples []})
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Handlers.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -106,8 +109,10 @@
         new-sound (assoc (get snds sound-idx) :current-offset x-offset)]
     (om/transact! snds #(assoc % sound-idx new-sound))))
 
-(defn handle-new-sample [app-state sound]
-  (om/transact! (samples) #(conj % (make-new-sample sound))))
+(defn handle-set-track-name [app-state track trk-name]
+  (let [i (last (om/path track))
+        new-track (assoc (get (tracks) i) :name trk-name)]
+    (om/transact! (tracks) #(assoc % i new-track))))
 
 (defn start-actions-handler [actions-chan app-state]
   (go-loop [action-vec (<! actions-chan)]
@@ -117,6 +122,9 @@
             (handle-update-sound-note-type app-state sound note-type)
        [[:set-sound-offset sound-index x-offset]]
             (handle-update-sound-offset sound-index x-offset)
-       [[:new-sample sound]] (handle-new-sample app-state sound)
+       [[:new-sample sound]] (om/transact! (samples) #(conj % (make-new-sample sound)))
+       [[:make-new-track]]  (om/transact! (tracks) #(conj % (make-new-track)))
+       [[:set-track-name track trk-name]] (handle-set-track-name app-state track trk-name)
+       [[:toggle-buffers]] (om/transact! app-state [:ui :buffers-visible] not)
        :else (.log js/console "Unknown handler: " (clj->js action-vec)))
      (recur (<! actions-chan))))

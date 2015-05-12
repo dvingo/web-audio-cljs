@@ -50,15 +50,17 @@ body {
   100% { transform: rotate(360deg); }
 }
 
-.samples {
-   width: 50%;
-   float: left;
-   display: flex;
-   flex-flow: row wrap;
-   justify-content: flex-start;
+.middle-views:after {
+  content: "";
+  display: table;
+  clear: both;
 }
 
-
+.samples {
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: flex-start;
+}
 
 .sample {
   position: relative;

@@ -6,11 +6,11 @@
 
 (defmacro build-button [disp-name on-click label]
   `(om.core/build
-     (~'fn [~'_ ~'owner]
-       (~'reify
+     (fn [_# owner#]
+       (reify
          om.core/IDisplayName
-         (~'display-name [~'_] ~disp-name)
+         (~'display-name [_#] ~disp-name)
          om.core/IRender
-         (~'render [~'_]
+         (~'render [_#]
            (om.dom/button (cljs.core/js-obj "onClick" ~on-click) ~label))))
      nil))

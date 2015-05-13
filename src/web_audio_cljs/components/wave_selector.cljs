@@ -26,17 +26,14 @@
 (defn draw-select-rect! [canvas-width canvas-height canvas-context mouse-down? mouse-over?]
   (.clearRect canvas-context 0 0 canvas-width canvas-height)
   (.fillRect canvas-context 0 0 canvas-width canvas-height)
+  (aset canvas-context "strokeStyle" "aliceblue")
   (cond
     mouse-down?
-    (do
-      (aset canvas-context "strokeStyle" "aliceblue")
-      (aset canvas-context "lineWidth" 6)
-      (.strokeRect canvas-context 2 2 (- canvas-width 4) (- canvas-height 4)))
+    (do (aset canvas-context "lineWidth" 6)
+        (.strokeRect canvas-context 2 2 (- canvas-width 4) (- canvas-height 4)))
     mouse-over?
-    (do
-      (aset canvas-context "strokeStyle" "aliceblue")
-      (aset canvas-context "lineWidth" 2)
-      (.strokeRect canvas-context 0 0 canvas-width canvas-height))))
+    (do (aset canvas-context "lineWidth" 2)
+        (.strokeRect canvas-context 0 0 canvas-width canvas-height))))
 
 (defn wave-selector-view [sound owner]
   (reify
@@ -63,11 +60,11 @@
           (alt!
             mouse-move-chan
             ([[new-x mouse-down-x _ old-y]]
-             (let [clamp-x
-                   (.clamp goog.math new-x 0 (- wave-width (:canvas-width (om/get-state owner))))]
-             (>! (:action-chan (om/get-shared owner))
-                 [:set-sound-offset (last (om/path sound)) clamp-x])
-             (om/update-state! owner #(assoc % :x-offset clamp-x :mouse-down-pos [mouse-down-x old-y]))))
+             (let [canvas-width (:canvas-width (om/get-state owner))
+                   clamp-x (.clamp goog.math new-x 0 (- wave-width canvas-width))]
+               (>! (:action-chan (om/get-shared owner))
+                   [:set-sound-offset (last (om/path sound)) clamp-x])
+               (om/update-state! owner #(assoc % :x-offset clamp-x :mouse-down-pos [mouse-down-x old-y]))))
             mouse-up-chan
             ([_] (om/set-state! owner :mouse-down false)))
           (recur))

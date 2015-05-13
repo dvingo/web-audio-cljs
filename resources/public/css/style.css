@@ -85,3 +85,16 @@ body {
   right: 10px;
   color: mediumaquamarine;
 }
+
+.track .container {
+  border: 1px solid black;
+  height: 40px;
+  width: 300px;
+  position: relative;
+}
+.track-sample {
+  position: absolute;
+  border: 1px solid violet;
+  height: 40px;
+  width: 40px;
+}

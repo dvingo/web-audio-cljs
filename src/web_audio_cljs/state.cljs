@@ -35,8 +35,8 @@
 
 (let [db {:compositions []
           :tracks []
-          :sounds []
           :samples []
+          :sounds []
           :analyser-node nil
           :audio-recorder nil
           :is-recording false
@@ -84,7 +84,15 @@
 (defn make-new-track []
   {:id (uuid/make-random)
    :name nil
-   :samples []})
+   :track-samples []})
+
+(defn make-track-sample [sample]
+  {:id (uuid/make-random)
+   :sample (:id sample)
+   :offset 0})
+
+(defn sample-from-id [sample-id]
+  (first (filter #(= (:id %) sample-id) (samples))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Handlers.
@@ -114,17 +122,25 @@
         new-track (assoc (get (tracks) i) :name trk-name)]
     (om/transact! (tracks) #(assoc % i new-track))))
 
+(defn handle-add-sample-to-track [app-state sample track]
+  (let [new-track-sample (make-track-sample sample)
+        new-track-samples (conj (:track-samples track) new-track-sample)
+        new-track (assoc track :track-samples new-track-samples)
+        i (last (om/path track))]
+  (om/transact! (tracks) #(assoc % i new-track))))
+
 (defn start-actions-handler [actions-chan app-state]
   (go-loop [action-vec (<! actions-chan)]
-     (match [action-vec]
-       [[:toggle-recording sound-name]] (handle-toggle-recording app-state sound-name)
-       [[:set-sound-note-type sound note-type]]
-            (handle-update-sound-note-type app-state sound note-type)
-       [[:set-sound-offset sound-index x-offset]]
-            (handle-update-sound-offset sound-index x-offset)
-       [[:new-sample sound]] (om/transact! (samples) #(conj % (make-new-sample sound)))
-       [[:make-new-track]]  (om/transact! (tracks) #(conj % (make-new-track)))
-       [[:set-track-name track trk-name]] (handle-set-track-name app-state track trk-name)
-       [[:toggle-buffers]] (om/transact! app-state [:ui :buffers-visible] not)
-       :else (.log js/console "Unknown handler: " (clj->js action-vec)))
-     (recur (<! actions-chan))))
+    (match [action-vec]
+      [[:toggle-recording sound-name]] (handle-toggle-recording app-state sound-name)
+      [[:set-sound-note-type sound note-type]]
+           (handle-update-sound-note-type app-state sound note-type)
+      [[:set-sound-offset sound-index x-offset]]
+           (handle-update-sound-offset sound-index x-offset)
+      [[:new-sample sound]] (om/transact! (samples) #(conj % (make-new-sample sound)))
+      [[:make-new-track]]  (om/transact! (tracks) #(conj % (make-new-track)))
+      [[:set-track-name track trk-name]] (handle-set-track-name app-state track trk-name)
+      [[:toggle-buffers]] (om/transact! app-state [:ui :buffers-visible] not)
+      [[:add-sample-to-track sample]] (handle-add-sample-to-track app-state sample (first (tracks)))
+      :else (.log js/console "Unknown handler: " (clj->js action-vec)))
+    (recur (<! actions-chan))))

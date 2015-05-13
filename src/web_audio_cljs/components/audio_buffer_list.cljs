@@ -13,8 +13,6 @@
     (render [_]
       (let [snds (om/observe owner (sounds))
             visible (:buffers-visible ui)]
-
-        (.log js/console "visible: " visible)
         (dom/div nil
           (om/build
             (make-button "toggle-buffers-view"

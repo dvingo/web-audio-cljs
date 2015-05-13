@@ -4,8 +4,8 @@
             [web-audio-cljs.state :refer [sample-width sample-height
                                           note-type->bg-color
                                           note-type->color
-                                          note-type->num]]
-            [cljs.core.async :refer [put!]]))
+                                          note-type->num]])
+  (:require-macros [web-audio-cljs.macros :refer [send!]]))
 
 (def fill-color "lavender")
 (def stroke-color "linen")
@@ -27,31 +27,30 @@
 (defn sample-view [sample owner]
   (reify
     om/IDisplayName (display-name [_] "sample-view")
-    om/IRender (render [_]
-                 (let [note-type (:type sample)
-                       theta (/ (* 2 js/Math.PI) (note-type->num note-type))
-                       x (x-from-angle theta circle-radius)
-                       y (y-from-angle theta circle-radius)]
-                   (dom/div #js {:className "sample"
-                                 :style #js
-                                 {:width sample-width
-                                  :height sample-height
-                                  :color (get note-type->color note-type)
-                                  :background (get note-type->bg-color note-type)
-                                  :padding (/ sample-width 10)
-                                  :borderRadius (/ sample-width 10)}}
-                          (dom/p #js {:className "name"} (:name sample))
-                          (apply dom/svg #js {:viewBox "0 0 1 1"
-                                              :width "20"
-                                              :style #js {:position "absolute"
-                                                          :top "4px"
-                                                          :right "4px"
-                                                          :padding "4px"}}
-                             (if (= note-type "Whole")
-                               [(dom/circle #js {:cx ".5" :cy ".5" :r circle-radius
-                                                 :strokeWidth stroke-width :stroke stroke-color :fill fill-color})]
-                               [(dom/circle #js {:cx ".5" :cy ".5" :r circle-radius
-                                                 :strokeWidth stroke-width :stroke stroke-color :fill "none"})
-                                (dom/path #js {:d (arc-path circle-radius x y)
-                                               :fill fill-color
-                                               :transform (str "rotate(270,"circle-radius","circle-radius")")})])))))))
+    om/IRender
+    (render [_]
+      (let [note-type (:type sample)
+            theta (/ (* 2 js/Math.PI) (note-type->num note-type))
+            x (x-from-angle theta circle-radius)
+            y (y-from-angle theta circle-radius)]
+        (dom/div #js {:className "sample"
+                      :style #js
+                      {:width sample-width
+                       :height sample-height
+                       :color (get note-type->color note-type)
+                       :background (get note-type->bg-color note-type)
+                       :padding (/ sample-width 10)
+                       :borderRadius (/ sample-width 10)}
+                      :onClick #(send! owner :add-sample-to-track sample)}
+                 (dom/p #js {:className "name"} (:name sample))
+                 (apply dom/svg #js {:viewBox "0 0 1 1" :width "20"
+                                     :style #js {:position "absolute" :top "4px"
+                                                 :right "4px" :padding "4px"}}
+                        (if (= note-type "Whole")
+                          [(dom/circle #js {:cx ".5" :cy ".5" :r circle-radius
+                                            :strokeWidth stroke-width :stroke stroke-color :fill fill-color})]
+                          [(dom/circle #js {:cx ".5" :cy ".5" :r circle-radius
+                                            :strokeWidth stroke-width :stroke stroke-color :fill "none"})
+                           (dom/path #js {:d (arc-path circle-radius x y)
+                                          :fill fill-color
+                                          :transform (str "rotate(270,"circle-radius","circle-radius")")})])))))))

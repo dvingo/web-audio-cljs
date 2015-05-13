@@ -16,8 +16,10 @@
                         ["webkitRequestAnimationFrame" "mozRequestAnimationFrame"])
 
 #_{:compositions [{:id (uuid/make-random) :name "First composition" :tracks [track-id1 track-id2]}]
-          :tracks [{:id track-id1 :name "First track" :samples [sample-id1 sample-id2 sample-id3]}
-                   {:id track-id2 :name "Second track" :samples [sample-id4 sample-id5 sample-id6]}]
+          :tracks [{:id track-id1 :name "First track" :track-samples [sample-id1 sample-id2 sample-id3]}
+                   {:id track-id2 :name "Second track" :track-samples [sample-id4 sample-id5 sample-id6]}]
+          :track-samples [{:id track-sample-id1 :sample sample-id1 :offset 98}
+                        {:id track-sample-id2 :sample sample-id2 :offset 12}]
           :sounds [{:id sound-id1 :name "beep" :audio-buffer nil :current-note-type :quarter}
                             {:id sound-id2 :name "bleep" :audio-buffer nil :current-note-type :quarter}
                             {:id sound-id3 :name "bloop" :audio-buffer nil :current-note-type :quarter}

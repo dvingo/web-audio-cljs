@@ -5,7 +5,7 @@
                                           note-type->bg-color
                                           note-type->color
                                           note-type->num]])
-  (:require-macros [web-audio-cljs.macros :refer [send!]]))
+  (:require-macros [web-audio-cljs.macros :refer [send!!]]))
 
 (def fill-color "lavender")
 (def stroke-color "linen")
@@ -41,7 +41,7 @@
                        :background (get note-type->bg-color note-type)
                        :padding (/ sample-width 10)
                        :borderRadius (/ sample-width 10)}
-                      :onClick #(send! owner :add-sample-to-track sample)}
+                      :onClick #(send!! owner :add-sample-to-track sample)}
                  (dom/p #js {:className "name"} (:name sample))
                  (apply dom/svg #js {:viewBox "0 0 1 1" :width "20"
                                      :style #js {:position "absolute" :top "4px"

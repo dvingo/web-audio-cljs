@@ -98,3 +98,6 @@ body {
   height: 40px;
   width: 40px;
 }
+.track-sample:hover {
+  cursor: pointer;
+}

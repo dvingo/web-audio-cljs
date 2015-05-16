@@ -4,7 +4,7 @@
             [web-audio-cljs.components.audio-buffer :refer [audio-buffer-view]]
             [web-audio-cljs.utils :refer [make-button]]
             [web-audio-cljs.state :refer [sounds]])
-  (:require-macros [web-audio-cljs.macros :refer [send!]]))
+  (:require-macros [web-audio-cljs.macros :refer [send!!]]))
 
 (defn buffers-list-view [{:keys [bpm ui]} owner]
   (reify
@@ -16,7 +16,7 @@
         (dom/div nil
           (om/build
             (make-button "toggle-buffers-view"
-                         #(send! owner :toggle-buffers) "Toggle Buffers") nil)
+                         #(send!! owner :toggle-buffers) "Toggle Buffers") nil)
 
              (apply dom/div #js {:className "buffers-list"
                                  :style #js {:width "50%" :float "left"

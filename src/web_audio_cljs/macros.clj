@@ -1,7 +1,11 @@
 (ns web-audio-cljs.macros)
 
-(defmacro send! [owner action & data]
+(defmacro send!! [owner action & data]
   `(cljs.core.async/put! (:action-chan (om.core/get-shared ~owner))
+     [~action ~@data]))
+
+(defmacro send! [owner action & data]
+  `(cljs.core.async/>! (:action-chan (om.core/get-shared ~owner))
      [~action ~@data]))
 
 (defmacro build-button [disp-name on-click label]

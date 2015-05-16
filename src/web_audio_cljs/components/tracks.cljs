@@ -4,7 +4,7 @@
             [web-audio-cljs.state :refer [tracks]]
             [web-audio-cljs.utils :refer [make-button]]
             [web-audio-cljs.components.track :refer [track-view]])
-  (:require-macros [web-audio-cljs.macros :refer [send! build-button]]))
+  (:require-macros [web-audio-cljs.macros :refer [send!! build-button]]))
 
 (defn tracks-view [_ owner]
   (reify
@@ -13,6 +13,6 @@
     (render [_]
       (let [trcks (om/observe owner (tracks))]
         (dom/div nil
-          (build-button "new-track-button" #(send! owner :make-new-track) "New Track")
+          (build-button "new-track-button" #(send!! owner :make-new-track) "New Track")
           (apply dom/div #js {:className "tracks"}
             (map #(om/build track-view %) trcks)))))))

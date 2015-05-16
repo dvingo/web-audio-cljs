@@ -1,11 +1,12 @@
 (ns web-audio-cljs.components.wave-selector
-  (:require [cljs.core.async :refer [>! put!]]
+  (:require [cljs.core.async :refer [>!]]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [web-audio-cljs.utils :refer [listen]]
             [web-audio-cljs.state :refer [wave-width]])
   (:import [goog.events EventType])
-  (:require-macros [cljs.core.async.macros :refer [go go-loop alt!]]))
+  (:require-macros [cljs.core.async.macros :refer [go go-loop alt!]]
+                   [web-audio-cljs.macros :refer [send!]]))
 
 (defn rel-mouse-pos [e {:keys [x-offset mouse-down-pos]}]
   "Function to get updated position of overlay rectangle x position
@@ -40,12 +41,13 @@
     om/IDisplayName (display-name [_] "wave-selector-view")
 
     om/IInitState
-    (init-state [_] {:canvas nil
-                     :canvas-context nil
-                     :canvas-height 100
-                     :mouse-down false
-                     :mouse-down-pos []
-                     :mouse-over false})
+    (init-state [_]
+      {:canvas nil
+       :canvas-context nil
+       :canvas-height 100
+       :mouse-down false
+       :mouse-down-pos []
+       :mouse-over false})
 
     om/IDidMount
     (did-mount [_]
@@ -62,8 +64,7 @@
             ([[new-x mouse-down-x _ old-y]]
              (let [canvas-width (:canvas-width (om/get-state owner))
                    clamp-x (.clamp goog.math new-x 0 (- wave-width canvas-width))]
-               (>! (:action-chan (om/get-shared owner))
-                   [:set-sound-offset (last (om/path sound)) clamp-x])
+               (send! owner :set-sound-offset (last (om/path sound)) clamp-x)
                (om/update-state! owner #(assoc % :x-offset clamp-x :mouse-down-pos [mouse-down-x old-y]))))
             mouse-up-chan
             ([_] (om/set-state! owner :mouse-down false)))

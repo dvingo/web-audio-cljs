@@ -27,6 +27,16 @@
    "Half" "darksalmon"
    "Whole" "peachpuff"})
 
+(declare sample-from-id)
+
+(defn track-sample->bg-color [track-sample]
+  (let [s (:sample track-sample)
+        sample (sample-from-id s)]
+    (.log js/console "s ID: " s)
+    (.log js/console "sample FROM ID: " sample)
+
+    (get note-type->bg-color (:type sample))))
+
 (def note-type->color
   {"Eighth" "blanchedalmond"
    "Quarter" "blanchedalmond"
@@ -123,8 +133,7 @@
     (om/transact! (tracks) #(assoc % i new-track))))
 
 (defn handle-add-sample-to-track [app-state sample track]
-  (let [new-track-sample (make-track-sample sample)
-        new-track-samples (conj (:track-samples track) new-track-sample)
+  (let [new-track-samples (conj (:track-samples track) (make-track-sample sample))
         new-track (assoc track :track-samples new-track-samples)
         i (last (om/path track))]
   (om/transact! (tracks) #(assoc % i new-track))))
@@ -142,5 +151,5 @@
       [[:set-track-name track trk-name]] (handle-set-track-name app-state track trk-name)
       [[:toggle-buffers]] (om/transact! app-state [:ui :buffers-visible] not)
       [[:add-sample-to-track sample]] (handle-add-sample-to-track app-state sample (first (tracks)))
-      :else (.log js/console "Unknown handler: " (clj->js action-vec)))
+      :else (.error js/console "Unknown handler: " (clj->js action-vec)))
     (recur (<! actions-chan))))

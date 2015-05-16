@@ -94,7 +94,6 @@ body {
 }
 .track-sample {
   position: absolute;
-  border: 1px solid violet;
   height: 40px;
   width: 40px;
 }

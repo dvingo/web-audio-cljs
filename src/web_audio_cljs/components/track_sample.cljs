@@ -2,7 +2,7 @@
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [web-audio-cljs.utils :refer [lin-interp listen]]
-            [web-audio-cljs.state :refer [sample-from-id]])
+            [web-audio-cljs.state :refer [sample-from-id track-sample->bg-color]])
   (:import [goog.events EventType])
   (:require-macros [web-audio-cljs.macros :refer [send!]]
                    [cljs.core.async.macros :refer [go go-loop alt!]]))
@@ -21,7 +21,8 @@
       {:mouse-down false
        :mouse-down-x 0
        :x-offset 0
-       :t-sample-width 40})
+       :t-sample-width 40
+       :mouse-over false})
 
     om/IDidMount
     (did-mount [_]
@@ -44,13 +45,15 @@
           (recur))))
 
     om/IRenderState
-    (render-state [_ {:keys [x-offset]}]
+    (render-state [_ {:keys [x-offset mouse-down-x mouse-over mouse-down]}]
       (let [offset-str  (str "translate("x-offset"px,0px)")]
-        (.log js/console "x-offset: " x-offset)
-        (.log js/console "x-offset-str: " offset-str)
         (dom/div #js {:className "track-sample"
-                      :style #js {:WebkitTransform offset-str}
-                      :onMouseDown
-                      (fn [e] (om/update-state! owner
-                         #(assoc % :mouse-down true :mouse-down-pos [(.-clientX e) (.-clientY e)])))}
+                      :style #js {:WebkitTransform offset-str :transform offset-str
+                                  :background (track-sample->bg-color t-sample)
+                                  :border (cond mouse-down "1px solid dodgerblue"
+                                                mouse-over "1px solid white")}
+                      :onMouseDown (fn [e] (om/update-state! owner
+                         #(assoc % :mouse-down true :mouse-down-x (.-clientX e))))
+                      :onMouseOver #(om/set-state! owner :mouse-over true)
+                      :onMouseOut  #(om/set-state! owner :mouse-over false)}
            nil)))))

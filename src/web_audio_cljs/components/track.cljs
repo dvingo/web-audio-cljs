@@ -17,6 +17,5 @@
                                           track (.. % -target -value))})
         (dom/span nil (:name track))
         (apply dom/div #js {:className "container"}
-          (map #(let [sample (sample-from-id (:sample %))]
-                  (om/build track-sample-view sample))
+          (map #(om/build track-sample-view %)
                   (:track-samples track)))))))

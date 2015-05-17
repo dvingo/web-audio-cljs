@@ -52,7 +52,7 @@
           :is-recording false
           :bpm 120
           :ui {:buffers-visible true
-               :selected-track nil
+               :selected-track-id nil
                :selected-track-idx nil}}]
 
   (defonce app-state (atom db)))
@@ -143,21 +143,13 @@
 
 (defn handle-add-sample-to-track [app-state sample]
   (let [ui (ui)]
-    (when-let [track (:selected-track ui)]
-      (let [track-idx (:selected-track-idx ui)
+    (when-let [track-idx (:selected-track-idx ui)]
+      (let [track (get (tracks) track-idx)
             new-t-sample (make-track-sample sample)
             new-track-samples (conj (:track-samples track) (:id new-t-sample))
             new-track (assoc track :track-samples new-track-samples)]
-        (.log js/console "current track samples " (clj->js (:track-samples track)))
-        (.log js/console "selected track idx" track-idx)
-        (.log js/console "current-track" (clj->js track))
-        (.log js/console "new-track" (clj->js new-track))
-        (.log js/console "track samples cursor" (clj->js (track-samples)))
-        (.log js/console "tracks cursor" (clj->js (tracks)))
-        (.log js/console "new track samples " (clj->js new-track-samples))
         (om/transact! (tracks) #(assoc % track-idx new-track))
-        (om/transact! (track-samples) #(conj % new-t-sample))
-        ))))
+        (om/transact! (track-samples) #(conj % new-t-sample))))))
 
 (defn handle-set-track-sample-offset [app-state t-sample offset]
   (let [sample-i (last (om/path t-sample))
@@ -178,7 +170,8 @@
       [[:toggle-buffers]] (om/transact! app-state [:ui :buffers-visible] not)
       [[:add-sample-to-track sample]] (handle-add-sample-to-track app-state sample)
       [[:select-track track]] (om/transact! (ui)
-                                 #(assoc % :selected-track track :selected-track-idx (second (om/path track))))
+                                 #(assoc % :selected-track-id (:id track)
+                                           :selected-track-idx (second (om/path track))))
       [[:set-track-sample-offset track-sample offset]]
            (handle-set-track-sample-offset app-state track-sample offset)
       :else (.error js/console "Unknown handler: " (clj->js action-vec)))

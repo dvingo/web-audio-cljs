@@ -12,7 +12,7 @@
     om/IRender
     (render [_]
       (let [ui (om/observe owner (ui))
-            selected? (= (:id (:selected-track ui)) (:id track))]
+            selected? (= (:selected-track-id ui) (:id track))]
 
         (dom/div #js {:className "track"}
 

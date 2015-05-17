@@ -2,7 +2,7 @@
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [web-audio-cljs.utils :refer [lin-interp listen]]
-            [web-audio-cljs.state :refer [sample-from-id track-sample->bg-color]])
+            [web-audio-cljs.state :refer [track-sample->bg-color]])
   (:import [goog.events EventType])
   (:require-macros [web-audio-cljs.macros :refer [send!]]
                    [cljs.core.async.macros :refer [go go-loop alt!]]))

@@ -27,14 +27,13 @@
    "Half" "darksalmon"
    "Whole" "peachpuff"})
 
-(declare sample-from-id)
+(defn by-id [cursor id]
+  (first (filter #(= (:id %) id) cursor)))
+
+(declare samples)
 
 (defn track-sample->bg-color [track-sample]
-  (let [s (:sample track-sample)
-        sample (sample-from-id s)]
-    (.log js/console "s ID: " s)
-    (.log js/console "sample FROM ID: " sample)
-
+  (let [sample (by-id (samples) (:sample track-sample))]
     (get note-type->bg-color (:type sample))))
 
 (def note-type->color
@@ -45,13 +44,16 @@
 
 (let [db {:compositions []
           :tracks []
+          :track-samples []
           :samples []
           :sounds []
           :analyser-node nil
           :audio-recorder nil
           :is-recording false
           :bpm 120
-          :ui {:buffers-visible true}}]
+          :ui {:buffers-visible true
+               :selected-track nil
+               :selected-track-idx nil}}]
 
   (defonce app-state (atom db)))
 
@@ -66,22 +68,18 @@
 (defn tracks []
   (om/ref-cursor (:tracks (om/root-cursor app-state))))
 
+(defn track-samples []
+  (om/ref-cursor (:track-samples (om/root-cursor app-state))))
+
+(defn ui []
+  (om/ref-cursor (:ui (om/root-cursor app-state))))
+
 (defn make-new-sound [audio-buffer sound-name]
   {:id (uuid/make-random)
    :name sound-name
    :audio-buffer audio-buffer
    :current-offset 0
    :current-note-type "Quarter"})
-
-(defn save-sound! [app-state sound-name]
-  (let [{:keys [audio-recorder analyser-node]} @app-state
-        buffer-length (.-frequencyBinCount analyser-node)]
-    (.stop audio-recorder)
-    (.getBuffers audio-recorder
-                 (fn [buffers]
-                   (om/transact! app-state :sounds
-                                 #(conj % (make-new-sound (aget buffers 0) sound-name)))
-                   (.clear audio-recorder)))))
 
 (defn make-new-sample [sound]
   {:id (uuid/make-random)
@@ -101,8 +99,19 @@
    :sample (:id sample)
    :offset 0})
 
-(defn sample-from-id [sample-id]
-  (first (filter #(= (:id %) sample-id) (samples))))
+(defn save-sound! [app-state sound-name]
+  (let [{:keys [audio-recorder analyser-node]} @app-state
+        buffer-length (.-frequencyBinCount analyser-node)]
+    (.stop audio-recorder)
+    (.getBuffers audio-recorder
+                 (fn [buffers]
+                   (om/transact! app-state :sounds
+                                 #(conj % (make-new-sound (aget buffers 0) sound-name)))
+                   (.clear audio-recorder)))))
+
+(defn track-samples-for-track [track]
+  (let [track-samples (track-samples)]
+    (map #(by-id track-samples %) (:track-samples track))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Handlers.
@@ -132,11 +141,28 @@
         new-track (assoc (get (tracks) i) :name trk-name)]
     (om/transact! (tracks) #(assoc % i new-track))))
 
-(defn handle-add-sample-to-track [app-state sample track]
-  (let [new-track-samples (conj (:track-samples track) (make-track-sample sample))
-        new-track (assoc track :track-samples new-track-samples)
-        i (last (om/path track))]
-  (om/transact! (tracks) #(assoc % i new-track))))
+(defn handle-add-sample-to-track [app-state sample]
+  (let [ui (ui)]
+    (when-let [track (:selected-track ui)]
+      (let [track-idx (:selected-track-idx ui)
+            new-t-sample (make-track-sample sample)
+            new-track-samples (conj (:track-samples track) (:id new-t-sample))
+            new-track (assoc track :track-samples new-track-samples)]
+        (.log js/console "current track samples " (clj->js (:track-samples track)))
+        (.log js/console "selected track idx" track-idx)
+        (.log js/console "current-track" (clj->js track))
+        (.log js/console "new-track" (clj->js new-track))
+        (.log js/console "track samples cursor" (clj->js (track-samples)))
+        (.log js/console "tracks cursor" (clj->js (tracks)))
+        (.log js/console "new track samples " (clj->js new-track-samples))
+        (om/transact! (tracks) #(assoc % track-idx new-track))
+        (om/transact! (track-samples) #(conj % new-t-sample))
+        ))))
+
+(defn handle-set-track-sample-offset [app-state t-sample offset]
+  (let [sample-i (last (om/path t-sample))
+        new-t-sample (assoc t-sample :offset offset)]
+    (om/transact! (track-samples) #(assoc % sample-i new-t-sample))))
 
 (defn start-actions-handler [actions-chan app-state]
   (go-loop [action-vec (<! actions-chan)]
@@ -150,6 +176,10 @@
       [[:make-new-track]]  (om/transact! (tracks) #(conj % (make-new-track)))
       [[:set-track-name track trk-name]] (handle-set-track-name app-state track trk-name)
       [[:toggle-buffers]] (om/transact! app-state [:ui :buffers-visible] not)
-      [[:add-sample-to-track sample]] (handle-add-sample-to-track app-state sample (first (tracks)))
+      [[:add-sample-to-track sample]] (handle-add-sample-to-track app-state sample)
+      [[:select-track track]] (om/transact! (ui)
+                                 #(assoc % :selected-track track :selected-track-idx (second (om/path track))))
+      [[:set-track-sample-offset track-sample offset]]
+           (handle-set-track-sample-offset app-state track-sample offset)
       :else (.error js/console "Unknown handler: " (clj->js action-vec)))
     (recur (<! actions-chan))))

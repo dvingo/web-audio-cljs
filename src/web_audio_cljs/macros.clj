@@ -18,3 +18,6 @@
          (~'render [_#]
            (om.dom/button (cljs.core/js-obj "onClick" ~on-click) ~label))))
      nil))
+
+(defmacro by-id [cursor id]
+  `(first (filter #(= (:id %) id) cursor)))

@@ -11,44 +11,17 @@ body {
   background: mediumslateblue;
 }
 
-.record {
+/*.record {
   width: 100px;
   height: 100px;
-
   border-radius: 50px;
-
   z-index: -1;
   background-image: url('/images/mic.svg');
-  /*
-   * mic
-   * mic2
-   * mic3
-   * mic_white
-   */
   background-size: 100% 100%;
   position: absolute;
   top: 360px;
-
   box-shadow: 2px 2px 6px;
-}
-.record:hover {
-  -webkit-animation: spin 2s infinite linear;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-@-webkit-keyframes start {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(0deg); }
-}
-
-@-webkit-keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
+}*/
 
 .middle-views:after {
   content: "";
@@ -60,6 +33,7 @@ body {
   display: flex;
   flex-flow: row wrap;
   justify-content: flex-start;
+  float: left;
 }
 
 .sample {
@@ -70,7 +44,7 @@ body {
   flex-direction: column;
 }
 
-.sample .name  {
+.sample .name {
   line-height: 1em;
   margin: 0;
   padding: 0;

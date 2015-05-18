@@ -9,6 +9,7 @@
 (def wave-height 100)
 (def sample-width 80)
 (def sample-height 80)
+(def bpm 120)
 
 (def note-type->num
   {"Eighth" 8 "Quarter" 4 "Half" 2 "Whole" 1})
@@ -22,10 +23,10 @@
 (def note-types (keys note-type->width))
 
 (def note-type->bg-color
-  {"Eighth" "mediumvioletred"
+  {"Eighth"  "mediumvioletred"
    "Quarter" "darkorchid"
-   "Half" "darksalmon"
-   "Whole" "peachpuff"})
+   "Half"    "darksalmon"
+   "Whole"   "peachpuff"})
 
 (defn by-id [cursor id]
   (first (filter #(= (:id %) id) cursor)))
@@ -37,10 +38,10 @@
     (get note-type->bg-color (:type sample))))
 
 (def note-type->color
-  {"Eighth" "blanchedalmond"
+  {"Eighth"  "blanchedalmond"
    "Quarter" "blanchedalmond"
-   "Half" "blanchedalmond"
-   "Whole" "mediumpurple"})
+   "Half"    "blanchedalmond"
+   "Whole"   "mediumpurple"})
 
 (let [db {:compositions []
           :tracks []
@@ -50,7 +51,6 @@
           :analyser-node nil
           :audio-recorder nil
           :is-recording false
-          :bpm 120
           :ui {:buffers-visible true
                :selected-track-id nil
                :selected-track-idx nil}}]
@@ -142,14 +142,13 @@
     (om/transact! (tracks) #(assoc % i new-track))))
 
 (defn handle-add-sample-to-track [app-state sample]
-  (let [ui (ui)]
-    (when-let [track-idx (:selected-track-idx ui)]
-      (let [track (get (tracks) track-idx)
-            new-t-sample (make-track-sample sample)
-            new-track-samples (conj (:track-samples track) (:id new-t-sample))
-            new-track (assoc track :track-samples new-track-samples)]
-        (om/transact! (tracks) #(assoc % track-idx new-track))
-        (om/transact! (track-samples) #(conj % new-t-sample))))))
+  (when-let [track-idx (:selected-track-idx (ui))]
+    (let [track (get (tracks) track-idx)
+          new-t-sample (make-track-sample sample)
+          new-track-samples (conj (:track-samples track) (:id new-t-sample))
+          new-track (assoc track :track-samples new-track-samples)]
+      (om/transact! (tracks) #(assoc % track-idx new-track))
+      (om/transact! (track-samples) #(conj % new-t-sample)))))
 
 (defn handle-set-track-sample-offset [app-state t-sample offset]
   (let [sample-i (last (om/path t-sample))

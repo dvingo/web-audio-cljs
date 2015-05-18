@@ -3,7 +3,7 @@
             [om.dom :as dom :include-macros true]
             [web-audio-cljs.components.wave-selector :refer [wave-selector-view]]
             [web-audio-cljs.state :refer [audio-context wave-width wave-height
-                                          note-type->width note-types]]
+                                          note-type->width note-types bpm]]
             [web-audio-cljs.utils :refer [l min-arr-val max-arr-val
                                           lin-interp recording-duration-sec]])
   (:require-macros [web-audio-cljs.macros :refer [send!! build-button]]))
@@ -43,7 +43,7 @@
                        :value (:current-note-type sound)}
         (map #(dom/option #js {:value %} %) note-types)))))
 
-(defn audio-buffer-view [{:keys [bpm sound]} owner]
+(defn audio-buffer-view [sound owner]
   (reify
     om/IDisplayName (display-name [_] "audio-buffer-view")
     om/IInitState

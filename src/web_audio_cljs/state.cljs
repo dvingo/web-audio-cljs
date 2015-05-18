@@ -7,9 +7,12 @@
 
 (def wave-width 400)
 (def wave-height 100)
+(def track-width 300)
 (def sample-width 80)
 (def sample-height 80)
 (def bpm 120)
+(def composition-duration-sec 10)
+(def audio-look-ahead-time-sec 0.01)
 
 (def note-type->num
   {"Eighth" 8 "Quarter" 4 "Half" 2 "Whole" 1})

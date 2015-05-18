@@ -6,6 +6,7 @@
             [web-audio-cljs.components.samples :refer [samples-view]]
             [web-audio-cljs.components.tracks :refer [tracks-view]]
             [web-audio-cljs.components.chart :refer [chart-view]]
+            [web-audio-cljs.components.play :refer [play-view]]
             [web-audio-cljs.components.recorder :refer [recorder-view]]))
 
 (defn main-view [data owner]
@@ -21,4 +22,5 @@
           (om/build buffers-list-view data)
           (om/build samples-view data))
         (om/build tracks-view data)
+        (om/build play-view data)
         (om/build chart-view data)))))

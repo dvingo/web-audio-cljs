@@ -2,7 +2,7 @@
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [web-audio-cljs.utils :refer [lin-interp]]
-            [web-audio-cljs.state :refer [ui track-samples-for-track]]
+            [web-audio-cljs.state :refer [ui track-samples-for-track track-width]]
             [web-audio-cljs.components.track-sample :refer [track-sample-view]])
   (:require-macros [web-audio-cljs.macros :refer [send!!]]))
 
@@ -24,7 +24,8 @@
 
           (apply dom/div #js
             {:className "container"
-             :style #js {:border
+             :style #js {:width track-width
+                         :border
                          (if selected? "3px dashed" "1px solid black")}
              :onClick #(when-not selected? (send!! owner :select-track track))}
             (map #(om/build track-sample-view %) (track-samples-for-track track))))))))

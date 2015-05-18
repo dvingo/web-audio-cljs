@@ -5,7 +5,8 @@
             [web-audio-cljs.state :refer [audio-context wave-width wave-height
                                           note-type->width note-types bpm]]
             [web-audio-cljs.utils :refer [l min-arr-val max-arr-val
-                                          lin-interp recording-duration-sec]])
+                                          lin-interp recording-duration-sec
+                                          play-buffer!]])
   (:require-macros [web-audio-cljs.macros :refer [send!! build-button]]))
 
 (defn draw-buffer! [width height canvas-context data]
@@ -21,17 +22,6 @@
         (let [datum (.min js/Math (aget data (+ (* i step) j)) 1)
               height (scale datum)]
           (.fillRect canvas-context i amp 1 height))))))
-
-(defn play-buffer! [buffer-data offset duration]
-  (let [source (.createBufferSource audio-context)
-        buffer (.createBuffer audio-context 1
-                              (.-length buffer-data)
-                              (.-sampleRate audio-context))
-        chan-data (.getChannelData buffer 0)]
-    (.set chan-data buffer-data)
-    (aset source "buffer" buffer)
-    (.connect source (.-destination audio-context))
-    (.start source 0 offset duration)))
 
 (defn note-type-view [sound owner]
   (reify
@@ -85,4 +75,4 @@
           (build-button "make-sample-button"
                         #(send!! owner :new-sample sound) "Make Sample")
           (build-button "play-audio-buffer-view"
-              #(play-buffer! audio-buffer play-offset play-duration) "Play")))))))
+              #(play-buffer! audio-context audio-buffer play-offset play-duration) "Play")))))))

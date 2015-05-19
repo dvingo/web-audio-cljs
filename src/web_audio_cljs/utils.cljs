@@ -35,8 +35,6 @@
 (defn play-track-sample! [audio-context track-sample]
   (let [sample (by-id (samples) (:sample track-sample))
         recording-length (recording-duration-sec bpm)]
-    (.log js/console "playing sample: " (:name sample))
-    (.log js/console ": ")
     (play-buffer! audio-context
                   (:audio-buffer sample)
                   ((lin-interp 0 wave-width 0 recording-length) (:offset sample))

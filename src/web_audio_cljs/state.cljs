@@ -12,7 +12,9 @@
 (def sample-height 80)
 (def bpm 120)
 (def composition-duration-sec 10)
-(def audio-look-ahead-time-sec 0.01)
+(def seconds-per-beat (/ bpm 60))
+(def sixteenth-note-length (* 0.25 seconds-per-beat))
+(def audio-look-ahead-time-sec 0.5)
 
 (def note-type->num
   {"Eighth" 8 "Quarter" 4 "Half" 2 "Whole" 1})

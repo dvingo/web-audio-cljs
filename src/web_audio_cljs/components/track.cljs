@@ -2,9 +2,26 @@
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [web-audio-cljs.utils :refer [lin-interp]]
-            [web-audio-cljs.state :refer [ui track-samples-for-track track-width]]
+            [web-audio-cljs.state :refer [ui track-samples-for-track track-width
+                                          track-sample-height
+                                          composition-duration-sec audio-context]]
             [web-audio-cljs.components.track-sample :refer [track-sample-view]])
   (:require-macros [web-audio-cljs.macros :refer [send!!]]))
+
+(defn play-head-view [_ owner]
+  (reify
+    om/IDisplayName (display-name [_] "play-head-view")
+    om/IDidMount (did-mount [_] (om/refresh! owner))
+    om/IDidUpdate (did-update [_ _ _] (om/refresh! owner))
+    om/IRender
+    (render [_]
+      (let [current-time (.-currentTime audio-context)
+            track-offset-time (mod current-time composition-duration-sec)
+            x-offset ((lin-interp 0 composition-duration-sec 0 track-width) track-offset-time)
+            offset-str (str "translate("x-offset"px,0px)")]
+      (dom/div #js {:className "play-head" :style #js
+        {:height track-sample-height :WebkitTransform offset-str :transform offset-str}}
+        nil)))))
 
 (defn track-view [track owner]
   (reify
@@ -28,4 +45,5 @@
                          :border
                          (if selected? "3px dashed" "1px solid black")}
              :onClick #(when-not selected? (send!! owner :select-track track))}
-            (map #(om/build track-sample-view %) (track-samples-for-track track))))))))
+            (concat [(om/build play-head-view nil)]
+              (map #(om/build track-sample-view %) (track-samples-for-track track)))))))))

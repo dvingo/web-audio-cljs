@@ -2,12 +2,12 @@
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [web-audio-cljs.utils :refer [lin-interp listen]]
-            [web-audio-cljs.state :refer [track-sample->bg-color]])
+            [web-audio-cljs.state :refer [track-sample->bg-color track-width
+                                          note-type->width
+                                          track-sample-height]])
   (:import [goog.events EventType])
   (:require-macros [web-audio-cljs.macros :refer [send!]]
                    [cljs.core.async.macros :refer [go go-loop alt!]]))
-
-(def track-width 300)
 
 (defn rel-mouse-x-pos [mouse-x {:keys [x-offset mouse-down-x]}]
   (let [x-delta (- mouse-x mouse-down-x)]
@@ -49,9 +49,13 @@
       (let [offset-str  (str "translate("x-offset"px,0px)")]
         (dom/div #js {:className "track-sample"
                       :style #js {:WebkitTransform offset-str :transform offset-str
-                                  :background (track-sample->bg-color t-sample)
+                                  :background (if (:is-playing t-sample)
+                                                "black"
+                                                (track-sample->bg-color t-sample))
                                   :border (cond mouse-down "1px solid dodgerblue"
-                                                mouse-over "1px solid white")}
+                                                mouse-over "1px solid white")
+                                  :width 40;;track-sample-width
+                                  :height track-sample-height}
                       :onMouseDown (fn [e] (om/update-state! owner
                          #(assoc % :mouse-down true :mouse-down-x (.-clientX e))))
                       :onMouseOver #(om/set-state! owner :mouse-over true)

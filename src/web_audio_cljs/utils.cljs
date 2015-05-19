@@ -3,42 +3,9 @@
             [om.dom :as dom :include-macros true]
             [clojure.string :as string]
             [cljs.core.async :refer [put! chan]]
-            [web-audio-cljs.state :refer [by-id samples wave-width note-type->width bpm]]
             [goog.events :as events]))
 
 (defn l [& args] (.log js/console " " (string/join args)))
-
-(defn recording-duration [bpm]
-  "Length of a quarter note in milliseconds."
-  (* (/ bpm 60) 1000))
-
-(defn recording-duration-sec [bpm]
-  "Length of a quarter note in seconds"
-  (/ bpm 60))
-
-(defn sample-duration [sample]
-  (let [sample-width (get note-type->width (:type sample))]
-    (* (/ sample-width wave-width) (recording-duration-sec bpm))))
-
-(defn play-buffer! [audio-context buffer-data offset duration]
-  (let [source (.createBufferSource audio-context)
-        buffer (.createBuffer audio-context 1
-                              (.-length buffer-data)
-                              (.-sampleRate audio-context))
-        chan-data (.getChannelData buffer 0)]
-    (.set chan-data buffer-data)
-    (aset source "buffer" buffer)
-    (.connect source (.-destination audio-context))
-    (.start source 0 offset duration)))
-
-(declare lin-interp)
-(defn play-track-sample! [audio-context track-sample]
-  (let [sample (by-id (samples) (:sample track-sample))
-        recording-length (recording-duration-sec bpm)]
-    (play-buffer! audio-context
-                  (:audio-buffer sample)
-                  ((lin-interp 0 wave-width 0 recording-length) (:offset sample))
-                  (sample-duration sample))))
 
 (defn listen
   ([el type]

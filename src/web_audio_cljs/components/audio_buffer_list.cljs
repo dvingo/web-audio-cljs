@@ -17,6 +17,6 @@
           (build-button "toggle-buffers-view"
             #(send!! owner :toggle-buffers) "Toggle Buffers")
 
-             (apply dom/div #js {:style #js {:float "left"
-                                             :display (if visible "block" "none")}}
-               (map #(om/build audio-buffer-view %) snds)))))))
+          (apply dom/div #js {:style #js
+            {:float "left" :display (if visible "block" "none")}}
+            (map #(om/build audio-buffer-view %) snds)))))))

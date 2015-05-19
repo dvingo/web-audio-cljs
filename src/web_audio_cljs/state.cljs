@@ -2,12 +2,14 @@
   (:require [om.core :as om :include-macros true]
             [cljs-uuid.core :as uuid]
             [cljs.core.async :refer [put! chan timeout <! >! onto-chan]]
-            [cljs.core.match :refer-macros [match]])
+            [cljs.core.match :refer-macros [match]]
+            [web-audio-cljs.utils :refer [lin-interp]])
   (:require-macros [cljs.core.async.macros :refer [go-loop]]))
 
 (def wave-width 400)
 (def wave-height 100)
-(def track-width 300)
+(def track-width 600)
+(def track-sample-height 40)
 (def sample-width 80)
 (def sample-height 80)
 (def bpm 120)
@@ -15,6 +17,14 @@
 (def seconds-per-beat (/ bpm 60))
 (def sixteenth-note-length (* 0.25 seconds-per-beat))
 (def audio-look-ahead-time-sec 0.5)
+
+(defn recording-duration []
+  "Length of a quarter note in milliseconds."
+  (* (/ bpm 60) 1000))
+
+(defn recording-duration-sec []
+  "Length of a quarter note in seconds"
+  (/ bpm 60))
 
 (def note-type->num
   {"Eighth" 8 "Quarter" 4 "Half" 2 "Whole" 1})
@@ -58,7 +68,8 @@
           :is-recording false
           :ui {:buffers-visible true
                :selected-track-id nil
-               :selected-track-idx nil}}]
+               :selected-track-idx nil
+               :is-playing false}}]
 
   (defonce app-state (atom db)))
 
@@ -102,6 +113,7 @@
 (defn make-track-sample [sample]
   {:id (uuid/make-random)
    :sample (:id sample)
+   :is-playing false
    :offset 0})
 
 (defn save-sound! [app-state sound-name]
@@ -117,6 +129,28 @@
 (defn track-samples-for-track [track]
   (let [track-samples (track-samples)]
     (map #(by-id track-samples %) (:track-samples track))))
+
+(defn sample-duration [sample]
+  (let [sample-width (get note-type->width (:type sample))]
+    (* (/ sample-width wave-width) (recording-duration-sec))))
+
+(defn play-buffer! [audio-context buffer-data offset duration]
+  (let [source (.createBufferSource audio-context)
+        buffer (.createBuffer audio-context 1
+                              (.-length buffer-data)
+                              (.-sampleRate audio-context))
+        chan-data (.getChannelData buffer 0)]
+    (.set chan-data buffer-data)
+    (aset source "buffer" buffer)
+    (.connect source (.-destination audio-context))
+    (.start source 0 offset duration)))
+
+(defn play-track-sample! [track-sample]
+  (let [sample (by-id (samples) (:sample track-sample))]
+    (play-buffer! audio-context
+                  (:audio-buffer sample)
+                  ((lin-interp 0 wave-width 0 (recording-duration-sec)) (:offset sample))
+                  (sample-duration sample))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Handlers.
@@ -178,5 +212,8 @@
                                            :selected-track-idx (second (om/path track))))
       [[:set-track-sample-offset track-sample offset]]
            (handle-set-track-sample-offset app-state track-sample offset)
+      [[:toggle-playback]] (om/transact! (ui) :is-playing not)
+      [[:play-track-samples track-samples-to-play]]
+           (doseq [s track-samples-to-play] (play-track-sample! s))
       :else (.error js/console "Unknown handler: " (clj->js action-vec)))
     (recur (<! actions-chan))))

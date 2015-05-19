@@ -34,7 +34,7 @@
                        multiplier)]
       (draw-line-on-canvas! canvas-context canvas-height i spacing num-bars bar-width magnitude))))
 
-(defn draw-circle! [canvas freq-byte-data n]
+(defn draw-circle! [canvas freq-byte-data]
   (let [canvas-context (.getContext canvas "2d")
         canvas-width (.-width canvas)
         canvas-height (.-height canvas)
@@ -54,17 +54,16 @@
 
     om/IInitState
     (init-state [_]
-        {:canvas nil
-         :recording-canvas nil
-         :canvas-context nil
-         :canvas-width nil
-         :canvas-height nil
-         :spacing 3
-         :bar-width 1
-         :n 0
-         :num-bars nil
-         :freq-byte-data nil
-         :multiplier nil})
+      {:canvas nil
+       :recording-canvas nil
+       :canvas-context nil
+       :canvas-width nil
+       :canvas-height nil
+       :spacing 3
+       :bar-width 1
+       :num-bars nil
+       :freq-byte-data nil
+       :multiplier nil})
 
     om/IDidMount
     (did-mount [_]
@@ -88,14 +87,14 @@
 
     om/IDidUpdate
     (did-update [_ prev-props prev-state]
-      (let [{:keys [recording-canvas canvas-context canvas-width canvas-height num-bars spacing bar-width n]} (om/get-state owner)
+      (let [{:keys [recording-canvas canvas-context canvas-width canvas-height num-bars spacing bar-width]} (om/get-state owner)
             {:keys [freq-byte-data multiplier]} (get-time-domain-data analyser-node num-bars)]
         (.getByteFrequencyData analyser-node freq-byte-data)
         (when canvas-context
-          (draw-circle! recording-canvas freq-byte-data n)
+          (draw-circle! recording-canvas freq-byte-data)
           (draw-bars! canvas-context canvas-width canvas-height spacing
                       num-bars multiplier freq-byte-data bar-width))
-        (om/update-state! owner #(assoc % :freq-byte-data freq-byte-data :multiplier multiplier :n (inc n)))))
+        (om/update-state! owner #(assoc % :freq-byte-data freq-byte-data :multiplier multiplier))))
 
     om/IRender
     (render [_] nil)))

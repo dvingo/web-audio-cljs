@@ -3,10 +3,10 @@
             [om.dom :as dom :include-macros true]
             [web-audio-cljs.components.wave-selector :refer [wave-selector-view]]
             [web-audio-cljs.state :refer [audio-context wave-width wave-height
-                                          note-type->width note-types bpm]]
+                                          note-type->width note-types bpm
+                                          recording-duration-sec play-buffer!]]
             [web-audio-cljs.utils :refer [l min-arr-val max-arr-val
-                                          lin-interp recording-duration-sec
-                                          play-buffer!]])
+                                          lin-interp]])
   (:require-macros [web-audio-cljs.macros :refer [send!! build-button]]))
 
 (defn draw-buffer! [width height canvas-context data]
@@ -28,9 +28,9 @@
     om/IDisplayName (display-name [_] "note-type-view")
     om/IRender
     (render [_]
-      (apply dom/select #js {:onChange
-                       #(send!! owner :set-sound-note-type sound (.. % -target -value))
-                       :value (:current-note-type sound)}
+      (apply dom/select #js
+        {:onChange #(send!! owner :set-sound-note-type sound (.. % -target -value))
+         :value (:current-note-type sound)}
         (map #(dom/option #js {:value %} %) note-types)))))
 
 (defn audio-buffer-view [sound owner]
@@ -52,7 +52,7 @@
       (let [audio-buffer (:audio-buffer sound)
             selector-width (get note-type->width (:current-note-type sound))
             selector-offset (:current-offset sound)
-            recording-length (recording-duration-sec bpm)
+            recording-length (recording-duration-sec)
             play-offset ((lin-interp 0 wave-width 0 recording-length) selector-offset)
             play-duration (* (/ selector-width wave-width) recording-length)]
 
@@ -73,6 +73,6 @@
                    :max-width wave-width}})
         (dom/div nil
           (build-button "make-sample-button"
-                        #(send!! owner :new-sample sound) "Make Sample")
+            #(send!! owner :new-sample sound) "Make Sample")
           (build-button "play-audio-buffer-view"
-              #(play-buffer! audio-context audio-buffer play-offset play-duration) "Play")))))))
+            #(play-buffer! audio-context audio-buffer play-offset play-duration) "Play")))))))

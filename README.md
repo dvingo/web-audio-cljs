@@ -23,6 +23,7 @@ In the `master` branch, from the top directory of the project:
 lein clean && lein cljsbuild once min
 git checkout gh-pages
 mv resources/public/js/compiled/web_audio_cljs.js js/compiled/web_audio_cljs.js
+mv resources/public/css/style.css css/style.css
 git add js/compiled/web_audio_cljs.js
 git commit -m "Message"
 git push origin gh-pages

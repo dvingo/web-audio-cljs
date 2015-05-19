@@ -3,7 +3,7 @@ body {
   margin: 40px auto;
   max-width: 1024px;
 
-  font-family: sans-serif;
+  font-family: "Montserrat", sans-serif;
   font-size: 18px;
   line-height: 1.6;
 
@@ -11,41 +11,68 @@ body {
   background: mediumslateblue;
 }
 
-.record {
+/*.record {
   width: 100px;
   height: 100px;
-
   border-radius: 50px;
-
   z-index: -1;
   background-image: url('/images/mic.svg');
-  /*
-   * mic
-   * mic2
-   * mic3
-   * mic_white
-   */
   background-size: 100% 100%;
   position: absolute;
   top: 360px;
-
   box-shadow: 2px 2px 6px;
-}
-.record:hover {
-  -webkit-animation: spin 2s infinite linear;
+}*/
+
+.middle-views:after {
+  content: "";
+  display: table;
+  clear: both;
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+.samples {
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: flex-start;
+  float: left;
 }
 
-@-webkit-keyframes start {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(0deg); }
+.sample {
+  position: relative;
+  margin: 8px;
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
 }
 
-@-webkit-keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+.sample .name {
+  line-height: 1em;
+  margin: 0;
+  padding: 0;
+  word-wrap: break-word;
+  font-family: Raleway, sans-serif;
+  font-size: 1em;
+  font-weight: 700;
+}
+.sample .note-type {
+  position: absolute;
+  top: -20px;
+  right: 10px;
+  color: mediumaquamarine;
+}
+
+.track .container {
+  height: 40px;
+  position: relative;
+}
+.track-sample {
+  position: absolute;
+}
+.track-sample:hover {
+  cursor: pointer;
+}
+.play-head {
+  position: absolute;
+  width: 2px;
+  background: mediumspringgreen;
+  z-index: 999;
 }

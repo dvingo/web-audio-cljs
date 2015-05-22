@@ -68,8 +68,6 @@
           :is-recording false
           :ui {:buffers-visible true
                :selected-track nil
-               :selected-track-id nil
-               :selected-track-idx nil
                :is-playing false}}]
 
   (defonce app-state (atom db)))
@@ -187,7 +185,7 @@
       [[:new-sample sound]] (om/transact! (samples) #(conj % (make-new-sample sound)))
       [[:make-new-track]]  (om/transact! (tracks) #(conj % (make-new-track)))
       [[:set-track-name track track-name]] (om/transact! track #(assoc % :name track-name))
-      [[:toggle-buffers]] (om/transact! app-state [:ui :buffers-visible] not)
+      [[:toggle-buffers]] (om/transact! (ui) :buffers-visible not)
       [[:add-sample-to-track sample]] (handle-add-sample-to-track sample)
       [[:select-track track]] (om/transact! (ui) #(assoc % :selected-track track))
       [[:set-track-sample-offset track-sample offset]] (om/transact! track-sample #(assoc % :offset offset))

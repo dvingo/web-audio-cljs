@@ -10,24 +10,6 @@
 
 (set-prop-if-undefined! "AudioContext" js/window ["AudioContext" "webkitAudioContext" "mozAudioContext"])
 (set-prop-if-undefined! "getUserMedia" js/navigator ["webkitGetUserMedia" "mozGetUserMedia"])
-(set-prop-if-undefined! "cancelAnimationFrame" js/window
-                        ["webkitCancelAnimationFrame" "mozCancelAnimationFrame"])
-(set-prop-if-undefined! "requestAnimationFrame" js/window
-                        ["webkitRequestAnimationFrame" "mozRequestAnimationFrame"])
-
-#_{:compositions [{:id (uuid/make-random) :name "First composition" :tracks [track-id1 track-id2]}]
-          :tracks [{:id track-id1 :name "First track" :track-samples [sample-id1 sample-id2 sample-id3]}
-                   {:id track-id2 :name "Second track" :track-samples [sample-id4 sample-id5 sample-id6]}]
-          :track-samples [{:id track-sample-id1 :sample sample-id1 :offset 98}
-                        {:id track-sample-id2 :sample sample-id2 :offset 12}]
-          :sounds [{:id sound-id1 :name "beep" :audio-buffer nil :current-note-type :quarter}
-                            {:id sound-id2 :name "bleep" :audio-buffer nil :current-note-type :quarter}
-                            {:id sound-id3 :name "bloop" :audio-buffer nil :current-note-type :quarter}
-                            {:id sound-id4 :name "bop" :audio-buffer nil :current-note-type :quarter}]
-          :samples [{:id sample-id1 :sound sound-id1 :type :quarter :offset 7998}
-                        {:id sample-id2 :sound sound-id2 :type :whole :offset 4498}
-                        {:id sample-id3 :sound sound-id3 :type :half :offset 8998}
-                        {:id sample-id4 :sound sound-id4 :type :eighth :offset 998}]}
 
 (defonce got-audio? (atom false))
 

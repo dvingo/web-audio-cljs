@@ -64,7 +64,7 @@
             ([[new-x mouse-down-x _ old-y]]
              (let [canvas-width (:canvas-width (om/get-state owner))
                    clamp-x (.clamp goog.math new-x 0 (- wave-width canvas-width))]
-               (send! owner :set-sound-offset (last (om/path sound)) clamp-x)
+               (send! owner :set-sound-offset sound clamp-x)
                (om/update-state! owner #(assoc % :x-offset clamp-x :mouse-down-pos [mouse-down-x old-y]))))
             mouse-up-chan
             ([_] (om/set-state! owner :mouse-down false)))

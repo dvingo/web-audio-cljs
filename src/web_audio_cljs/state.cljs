@@ -1,7 +1,7 @@
 (ns web-audio-cljs.state
   (:require [om.core :as om :include-macros true]
             [cljs-uuid.core :as uuid]
-            [cljs.core.async :refer [put! chan timeout <! >! onto-chan]]
+            [cljs.core.async :refer [<!]]
             [cljs.core.match :refer-macros [match]]
             [web-audio-cljs.utils :refer [lin-interp]])
   (:require-macros [cljs.core.async.macros :refer [go-loop]]))
@@ -67,6 +67,7 @@
           :audio-recorder nil
           :is-recording false
           :ui {:buffers-visible true
+               :selected-track nil
                :selected-track-id nil
                :selected-track-idx nil
                :is-playing false}}]
@@ -163,55 +164,33 @@
       (.record audio-recorder))
     (om/transact! app-state :is-recording not)))
 
-(defn handle-update-sound-note-type [app-state sound note-type]
-  (let [i (last (om/path sound))
-        current-selector-width (note-type->width note-type wave-width)
-        x-offset (.clamp goog.math (:current-offset sound) 0 (- wave-width current-selector-width))
-        new-sound (assoc sound :current-note-type note-type :current-offset x-offset)]
-    (om/transact! (sounds) #(assoc % i new-sound))))
+(defn handle-update-sound-note-type [sound note-type]
+  (let [current-selector-width (note-type->width note-type wave-width)
+        x-offset (.clamp goog.math (:current-offset sound) 0 (- wave-width current-selector-width))]
+    (om/transact! sound #(assoc % :current-note-type note-type :current-offset x-offset))))
 
-(defn handle-update-sound-offset [sound-idx x-offset]
-  (let [snds (sounds)
-        new-sound (assoc (get snds sound-idx) :current-offset x-offset)]
-    (om/transact! snds #(assoc % sound-idx new-sound))))
-
-(defn handle-set-track-name [app-state track trk-name]
-  (let [i (last (om/path track))
-        new-track (assoc (get (tracks) i) :name trk-name)]
-    (om/transact! (tracks) #(assoc % i new-track))))
-
-(defn handle-add-sample-to-track [app-state sample]
-  (when-let [track-idx (:selected-track-idx (ui))]
-    (let [track (get (tracks) track-idx)
-          new-t-sample (make-track-sample sample)
+(defn handle-add-sample-to-track [sample]
+  (when-let [track (:selected-track (ui))]
+    (let [new-t-sample (make-track-sample sample)
           new-track-samples (conj (:track-samples track) (:id new-t-sample))
           new-track (assoc track :track-samples new-track-samples)]
-      (om/transact! (tracks) #(assoc % track-idx new-track))
+      (om/transact! track (fn [_] new-track))
+      (om/transact! (ui) #(assoc % :selected-track new-track))
       (om/transact! (track-samples) #(conj % new-t-sample)))))
-
-(defn handle-set-track-sample-offset [app-state t-sample offset]
-  (let [sample-i (last (om/path t-sample))
-        new-t-sample (assoc t-sample :offset offset)]
-    (om/transact! (track-samples) #(assoc % sample-i new-t-sample))))
 
 (defn start-actions-handler [actions-chan app-state]
   (go-loop [action-vec (<! actions-chan)]
     (match [action-vec]
       [[:toggle-recording sound-name]] (handle-toggle-recording app-state sound-name)
-      [[:set-sound-note-type sound note-type]]
-           (handle-update-sound-note-type app-state sound note-type)
-      [[:set-sound-offset sound-index x-offset]]
-           (handle-update-sound-offset sound-index x-offset)
+      [[:set-sound-note-type sound note-type]] (handle-update-sound-note-type sound note-type)
+      [[:set-sound-offset sound x-offset]] (om/transact! sound #(assoc % :current-offset x-offset))
       [[:new-sample sound]] (om/transact! (samples) #(conj % (make-new-sample sound)))
       [[:make-new-track]]  (om/transact! (tracks) #(conj % (make-new-track)))
-      [[:set-track-name track trk-name]] (handle-set-track-name app-state track trk-name)
+      [[:set-track-name track track-name]] (om/transact! track #(assoc % :name track-name))
       [[:toggle-buffers]] (om/transact! app-state [:ui :buffers-visible] not)
-      [[:add-sample-to-track sample]] (handle-add-sample-to-track app-state sample)
-      [[:select-track track]] (om/transact! (ui)
-                                 #(assoc % :selected-track-id (:id track)
-                                           :selected-track-idx (second (om/path track))))
-      [[:set-track-sample-offset track-sample offset]]
-           (handle-set-track-sample-offset app-state track-sample offset)
+      [[:add-sample-to-track sample]] (handle-add-sample-to-track sample)
+      [[:select-track track]] (om/transact! (ui) #(assoc % :selected-track track))
+      [[:set-track-sample-offset track-sample offset]] (om/transact! track-sample #(assoc % :offset offset))
       [[:toggle-playback]] (om/transact! (ui) :is-playing not)
       [[:play-track-samples track-samples-to-play]]
            (doseq [s track-samples-to-play] (play-track-sample! s))

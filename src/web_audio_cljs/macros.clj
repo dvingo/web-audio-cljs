@@ -1,4 +1,5 @@
-(ns web-audio-cljs.macros)
+(ns web-audio-cljs.macros
+  (:require [clojure.string :as string]))
 
 (defmacro send!! [owner action & data]
   `(cljs.core.async/put! (:action-chan (om.core/get-shared ~owner))
@@ -16,5 +17,13 @@
          (~'display-name [_#] ~disp-name)
          om.core/IRender
          (~'render [_#]
-           (om.dom/button (cljs.core/js-obj "onClick" ~on-click) ~label))))
+           (let [classNames# (string/join " " ["button"
+                                          "button--wayra"
+                                          "button--border-medium"
+                                          "button--text-upper"
+                                          "button--size-s"
+                                          "button--text-thick"
+                                          "button--inverted"])]
+           (om.dom/button (cljs.core/js-obj "onClick" ~on-click
+             "className" classNames#) ~label)))))
      nil))

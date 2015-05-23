@@ -52,3 +52,7 @@ A record image by Juan Pablo Bravo
 A mic image by
 - Dmitry Baranovskiy
 - https://thenounproject.com/term/microphone/5027/
+
+## Button Styles
+Codrops article "Inspiration for Button Styles and Effects"
+http://tympanus.net/codrops/2015/02/26/inspiration-button-styles-effects/

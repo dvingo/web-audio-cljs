@@ -13,6 +13,7 @@
     (render [_]
       (let [trcks (om/observe owner (tracks))]
         (dom/div nil
-          (build-button "new-track-button" #(send!! owner :make-new-track) "New Track")
+          (dom/div #js {:style #js {:height 80}}
+            (build-button "new-track-button" #(send!! owner :make-new-track) "New Track"))
           (apply dom/div #js {:className "tracks"}
             (map #(om/build track-view %) trcks)))))))

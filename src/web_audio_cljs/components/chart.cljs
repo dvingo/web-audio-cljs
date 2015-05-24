@@ -34,11 +34,8 @@
                        multiplier)]
       (draw-line-on-canvas! canvas-context canvas-height i spacing num-bars bar-width magnitude))))
 
-(defn draw-circle! [canvas freq-byte-data]
-  (let [canvas-context (.getContext canvas "2d")
-        canvas-width (.-width canvas)
-        canvas-height (.-height canvas)
-        max-val (max-of-array freq-byte-data)
+(defn draw-circle! [canvas-context canvas-width canvas-height freq-byte-data]
+  (let [max-val (max-of-array freq-byte-data)
         r (* (/ canvas-width 2) (/ max-val 256))
         center-x (/ canvas-width 2)
         center-y center-x]
@@ -54,11 +51,10 @@
 
     om/IInitState
     (init-state [_]
-      {:canvas nil
-       :recording-canvas nil
-       :canvas-context nil
-       :canvas-width nil
-       :canvas-height nil
+      {:bars-canvas nil
+       :circle-canvas nil
+       :bars-canvas-context nil
+       :circle-canvas-context nil
        :spacing 3
        :bar-width 1
        :num-bars nil
@@ -68,33 +64,37 @@
     om/IDidMount
     (did-mount [_]
       (let [{:keys [spacing]} (om/get-state owner)
-            canvas (.getElementById js/document "display")
-            recording-canvas (.getElementById js/document "recording")
-            canvas-context (.getContext canvas "2d")
-            canvas-width (.-width canvas)
-            canvas-height (.-height canvas)
-            num-bars (.round js/Math (/ canvas-width spacing))
+            bars-canvas (om/get-node owner "bars-canvas-ref")
+            circle-canvas (om/get-node owner "circle-canvas-ref")
+            num-bars (.round js/Math (/ (.-width bars-canvas) spacing))
             {:keys [freq-byte-data multiplier]} (get-time-domain-data analyser-node num-bars)]
         (om/update-state! owner #(assoc %
-                                        :canvas canvas
-                                        :canvas-context canvas-context
-                                        :recording-canvas recording-canvas
-                                        :canvas-width canvas-width
-                                        :canvas-height canvas-height
+                                        :bars-canvas bars-canvas
+                                        :circle-canvas circle-canvas
+                                        :bars-canvas-context (.getContext bars-canvas "2d")
+                                        :circle-canvas-context (.getContext circle-canvas "2d")
                                         :num-bars num-bars
                                         :freq-byte-data freq-byte-data
                                         :multiplier multiplier))))
 
     om/IDidUpdate
-    (did-update [_ prev-props prev-state]
-      (let [{:keys [recording-canvas canvas-context canvas-width canvas-height num-bars spacing bar-width]} (om/get-state owner)
+    (did-update [_ _ _]
+      (let [{:keys [bars-canvas bars-canvas-context circle-canvas circle-canvas-context
+                    num-bars spacing bar-width]} (om/get-state owner)
             {:keys [freq-byte-data multiplier]} (get-time-domain-data analyser-node num-bars)]
         (.getByteFrequencyData analyser-node freq-byte-data)
-        (when canvas-context
-          (draw-circle! recording-canvas freq-byte-data)
-          (draw-bars! canvas-context canvas-width canvas-height spacing
+        (when bars-canvas-context
+          (draw-circle! circle-canvas-context (.-width circle-canvas) (.-height circle-canvas) freq-byte-data)
+          (draw-bars! bars-canvas-context (.-width bars-canvas) (.-height bars-canvas) spacing
                       num-bars multiplier freq-byte-data bar-width))
         (om/update-state! owner #(assoc % :freq-byte-data freq-byte-data :multiplier multiplier))))
 
     om/IRender
-    (render [_] nil)))
+    (render [_]
+      (dom/div nil
+        (dom/canvas #js {:width  600
+                         :height 150
+                         :ref    "bars-canvas-ref"} "no canvas")
+        (dom/canvas #js {:width  100
+                         :height 100
+                         :ref    "circle-canvas-ref"} "no canvas")))))

@@ -20,10 +20,11 @@
            (let [classNames# (string/join " " ["button"
                                           "button--wayra"
                                           "button--border-medium"
-                                          "button--text-upper"
+                                          ;;"button--text-upper"
                                           "button--size-s"
-                                          "button--text-thick"
-                                          "button--inverted"])]
+                                          "button--text-medium"
+                                          "button--inverted"
+                                          "button--round-s"])]
            (om.dom/button (cljs.core/js-obj "onClick" ~on-click
              "className" classNames#) ~label)))))
      nil))

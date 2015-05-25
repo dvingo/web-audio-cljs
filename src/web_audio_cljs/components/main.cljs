@@ -16,11 +16,27 @@
       (start-actions-handler (:action-chan (om/get-shared owner)) data))
     om/IRender
     (render [_]
-      (dom/div nil
-        (om/build recorder-view data)
-        (dom/div #js {:className "middle-views"}
-          (om/build buffers-list-view data)
-          (om/build samples-view data))
-        (om/build tracks-view data)
-        (om/build play-view data)
-        (om/build chart-view data)))))
+      (dom/div #js {:className "container"}
+
+        (dom/div #js {:className "middle"}
+
+          (dom/div #js {:className "top-bar"}
+            (dom/div #js {:className "left-top"}
+              (dom/img #js {:src "images/cljs.png"
+                           :width 70 :height 70} nil)
+              (dom/h1 nil "Music"))
+
+            (dom/div #js {:className "vis"}
+              (om/build chart-view data)
+              (om/build recorder-view data)))
+
+          (dom/div #js {:className "middle-container"}
+
+            (dom/div #js {:className "left-bar"}
+              (om/build buffers-list-view data)
+              (om/build samples-view data))
+
+            (dom/div #js {:className "tracks-container"}
+              (om/build tracks-view data))))
+
+          (om/build play-view data)))))

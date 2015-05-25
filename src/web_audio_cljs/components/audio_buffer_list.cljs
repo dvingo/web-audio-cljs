@@ -13,10 +13,7 @@
       (let [snds (om/observe owner (sounds))
             ui (om/observe owner (ui))
             visible (:buffers-visible ui)]
-        (dom/div #js {:style #js {:float "left"}}
-          (build-button "toggle-buffers-view"
-            #(send!! owner :toggle-buffers) "Toggle Buffers")
-
-          (apply dom/div #js {:style #js
-            {:float "left" :display (if visible "block" "none")}}
+        (dom/div #js {:className "buffers"}
+          (dom/h4 nil "Recordings")
+          (apply dom/div #js {:style #js {:display (if visible "block" "none")}}
             (map #(om/build audio-buffer-view %) snds)))))))

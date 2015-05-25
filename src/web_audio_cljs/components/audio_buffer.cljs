@@ -56,7 +56,7 @@
             play-offset ((lin-interp 0 wave-width 0 recording-length) selector-offset)
             play-duration (* (/ selector-width wave-width) recording-length)]
 
-      (dom/div #js {:style #js {:position "relative"}}
+      (dom/div #js {:className "buffer"}
 
         (dom/div nil
           (dom/h3 #js {:style #js {:display "inline-block" :marginRight "1em"}} (:name sound))
@@ -71,7 +71,7 @@
           {:state {:x-offset selector-offset
                    :canvas-width selector-width
                    :max-width wave-width}})
-        (dom/div nil
+        (dom/div #js {:className "button-container"}
           (build-button "make-sample-button"
             #(send!! owner :new-sample sound) "Make Sample")
           (build-button "play-audio-buffer-view"

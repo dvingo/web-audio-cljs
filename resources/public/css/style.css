@@ -1,7 +1,13 @@
+*, *:before, *:after {
+  -webkit-box-sizing: border-box; /* Needed for mobile WebKit */
+  -moz-box-sizing: border-box; /* Needed for Firefox */
+  box-sizing: border-box
+}
+
 body {
-  padding: 0 10px;
-  margin: 40px auto;
-  max-width: 1024px;
+  padding: 10px;
+  margin: 0 auto;
+  max-width: 2048px;
 
   font-family: "Montserrat", sans-serif;
   font-size: 18px;
@@ -11,10 +17,90 @@ body {
   background: mediumslateblue;
 }
 
-.middle-views:after {
+.top-bar {
+  /*outline: 2px solid yellow;*/
+}
+
+.top-bar:after {
   content: "";
   display: table;
   clear: both;
+}
+
+.top-bar .left-top {
+  float: left;
+}
+
+.left-top h1 {
+  display: inline-block;
+  margin: 5px 0 0 20px;
+  vertical-align: top;
+}
+
+.top-bar .vis {
+  display: inline-block;
+  margin-left: 15%;
+}
+
+.bars-chart {
+  display: inline-block;
+}
+
+.recording {
+  display: inline-block;
+  position: relative;
+}
+.recording img {
+  position: relative;
+  top: -20px;
+  left: 20px;
+}
+.recording span {
+  position: absolute;
+  top: 24px;
+  left: 10px;
+}
+.recording canvas {
+  position: absolute;
+  top: -50px;
+  left: -10px;
+}
+
+.middle-container:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+.left-bar {
+  width: 30%;
+  float: left;
+  display: inline-block;
+  /*outline: 1px solid red;*/
+}
+
+.buffers {
+  border: 1px solid;
+}
+
+.buffer {
+  outline: 1px solid yellow;
+  position: relative;
+}
+
+.buffer .button-container:after {
+  display: table;
+  content: "";
+  clear: both;
+}
+
+.samples {
+  border: 1px solid #eee;
+}
+
+
+.tracks-container {
+  display: inline-block;
 }
 
 .samples {

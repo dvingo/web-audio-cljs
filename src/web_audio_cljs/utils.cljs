@@ -59,3 +59,23 @@
       om/IDisplayName (display-name [_] disp-name)
       om/IRender
       (render [_] (dom/button #js {:onClick on-click} btn-label)))))
+
+(defn get-time-domain-data-with-bars [analyser-node num-bars]
+  (let [Uint8Array (.-Uint8Array js/window)
+        freq-bin-count (.-frequencyBinCount analyser-node)]
+    {:freq-byte-data (Uint8Array. freq-bin-count)
+     :multiplier (/ (.-frequencyBinCount analyser-node) num-bars)}))
+
+(defn get-time-domain-data [analyser-node]
+  (let [Uint8Array (.-Uint8Array js/window)
+        freq-bin-count (.-frequencyBinCount analyser-node)]
+    (Uint8Array. freq-bin-count)))
+
+(defn clear-canvas! [canvas-context canvas-width canvas-height bg-color]
+  (if (nil? bg-color)
+    (.clearRect canvas-context 0 0 canvas-width canvas-height)
+    (do
+      (set! (.-fillStyle canvas-context) bg-color)
+      (.fillRect canvas-context 0 0 canvas-width canvas-height)
+      (set! (.-fillStyle canvas-context) "#F6D565")
+      (set! (.-lineCap canvas-context) "round"))))

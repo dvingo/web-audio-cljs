@@ -18,7 +18,7 @@ body {
 }
 
 .top-bar {
-  /*outline: 2px solid yellow;*/
+  min-width: 900px;
 }
 
 .top-bar:after {
@@ -53,17 +53,21 @@ body {
 .recording img {
   position: relative;
   top: -20px;
-  left: 20px;
+  left: 40px;
 }
+.recording img:hover {
+  cursor: pointer;
+}
+
 .recording span {
   position: absolute;
   top: 24px;
-  left: 10px;
+  left: 37px;
 }
 .recording canvas {
   position: absolute;
   top: -50px;
-  left: -10px;
+  left: 10px;
 }
 
 .middle-container:after {
@@ -74,24 +78,61 @@ body {
 
 .left-bar {
   width: 30%;
+  min-width: 412px;
   float: left;
   display: inline-block;
-  /*outline: 1px solid red;*/
 }
 
 .buffers {
   border: 1px solid;
 }
 
-.buffer {
-  outline: 1px solid yellow;
-  position: relative;
+.heading {
+  text-align: center;
+  margin: 0;
+  font-size: 14px;
+}
+.heading:hover {
+  cursor: pointer;
+  background-color: rgb(210, 77, 219);
 }
 
-.buffer .button-container:after {
+.buffer {
+  position: relative;
+  border-top: 1px solid;
+}
+
+.buffer-name {
+  margin: 0;
+  font-size: 12px;
+}
+.buffer-top-section {
+  padding-left: 4px;
+}
+.buffer-top-section:after {
   display: table;
   content: "";
   clear: both;
+}
+
+.button-container {
+  display: inline-block;
+  position: absolute;
+  right: 0;
+  top: 5px;
+}
+
+.button-container:after {
+  display: table;
+  content: "";
+  clear: both;
+}
+.wave-container {
+  position: relative;
+  width: 98%;
+  margin: 0 auto;
+  bottom: -4px;
+  padding-bottom: 4px;
 }
 
 .samples {
@@ -894,10 +935,14 @@ body {
 }
 
 /* Nina */
+/************************************************************************/
 .button--nina {
-  padding: 0 2em;
-  background: #7986cb;
-  color: #fff;
+  padding: 0;
+  margin: 0 0.5em;
+  height: 35px;
+  width: 90px;
+  background: #EDE9D8;
+  color: rgb(25, 24, 27);
   overflow: hidden;
   -webkit-transition: background-color 0.3s;
   transition: background-color 0.3s;
@@ -910,7 +955,8 @@ body {
   display: inline-block;
   padding: 1em 0;
   opacity: 0;
-  color: #fff;
+  color: rgb(25, 24, 27);
+  /*color: #fff;*/
   -webkit-transform: translate3d(0, -10px, 0);
   transform: translate3d(0, -10px, 0);
   -webkit-transition: -webkit-transform 0.3s, opacity 0.3s;
@@ -932,7 +978,8 @@ body {
   transition-timing-function: cubic-bezier(0.75, 0, 0.125, 1);
 }
 .button--nina:hover {
-  background-color: #3f51b5;
+  /*background-color: #3f51b5;*/
+  background-color: #fff;
 }
 .button--nina:hover::before {
   opacity: 0;
@@ -984,8 +1031,13 @@ body {
   -webkit-transition-delay: 0.45s;
   transition-delay: 0.45s;
 }
+.button--nina:hover > span:nth-child(11) {
+  -webkit-transition-delay: 0.49s;
+  transition-delay: 0.49s;
+}
 
 /* Nanuk */
+/************************************************************************/
 .button--nanuk {
   padding: 0 2em;
   overflow: hidden;

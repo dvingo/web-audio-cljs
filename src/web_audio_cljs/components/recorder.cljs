@@ -55,8 +55,6 @@
     (render-state [_ {:keys [sound-name time-left]}]
 
       (dom/div #js {:className "recording"}
-
-
         (dom/canvas #js {:width  100
                          :height 100
                          :style #js {:display (if (pos? time-left) "block" "none")}

@@ -58,21 +58,24 @@
 
       (dom/div #js {:className "buffer"}
 
+        (dom/div #js {:className "buffer-top-section"}
         (dom/div nil
-          (dom/h3 #js {:style #js {:display "inline-block" :marginRight "1em"}} (:name sound))
+          (dom/h3 #js {:className "buffer-name"} (:name sound))
           (om/build note-type-view sound))
 
-        (dom/canvas #js {:width  wave-width
-                         :height wave-height
-                         :ref    "canvas-ref"}
-                    "no canvas")
-
-        (om/build wave-selector-view sound
-          {:state {:x-offset selector-offset
-                   :canvas-width selector-width
-                   :max-width wave-width}})
         (dom/div #js {:className "button-container"}
           (build-button "make-sample-button"
             #(send!! owner :new-sample sound) "Make Sample")
           (build-button "play-audio-buffer-view"
-            #(play-buffer! audio-context audio-buffer play-offset play-duration) "Play")))))))
+            #(play-buffer! audio-context audio-buffer play-offset play-duration) "Play")))
+
+        (dom/div #js {:className "wave-container"}
+          (dom/canvas #js {:width  wave-width
+                           :height wave-height
+                           :ref    "canvas-ref"}
+                      "no canvas")
+
+          (om/build wave-selector-view sound
+            {:state {:x-offset selector-offset
+                     :canvas-width selector-width
+                     :max-width wave-width}})))))))

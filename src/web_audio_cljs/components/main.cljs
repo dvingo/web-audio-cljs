@@ -22,7 +22,7 @@
 
           (dom/div #js {:className "top-bar"}
             (dom/div #js {:className "left-top"}
-              (dom/img #js {:src "images/cljs.png"
+              (dom/img #js {:src "images/cljs3.png"
                            :width 70 :height 70} nil)
               (dom/h1 nil "Music"))
 

@@ -18,13 +18,16 @@
          om.core/IRender
          (~'render [_#]
            (let [classNames# (string/join " " ["button"
-                                          "button--wayra"
-                                          "button--border-medium"
-                                          ;;"button--text-upper"
-                                          "button--size-s"
+                                          "button--nina"
+                                          ;button--round-l
+                                          ;button--text-thick button--inverted
+                                          ;"button--border-medium"
+                                          ;"button--text-upper"
+                                          ;"button--size-s"
                                           "button--text-medium"
-                                          "button--inverted"
+                                          ;"button--inverted"
                                           "button--round-s"])]
-           (om.dom/button (cljs.core/js-obj "onClick" ~on-click
-             "className" classNames#) ~label)))))
+           (apply om.dom/button (cljs.core/js-obj "onClick" ~on-click
+             "className" classNames# "data-text" ~label)
+              (map #(om.dom/span nil %) ~label))))))
      nil))

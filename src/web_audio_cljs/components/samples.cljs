@@ -10,5 +10,7 @@
     om/IRender
     (render [_]
       (let [smples (om/observe owner (samples))]
-        (apply dom/div #js {:className "samples"}
-               (map #(om/build sample-view %) smples))))))
+        (dom/div nil
+          (dom/h2 #js {:className "heading"} "Samples")
+          (apply dom/div #js {:className "samples"}
+                 (map #(om/build sample-view %) smples)))))))

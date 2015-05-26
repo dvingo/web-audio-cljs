@@ -14,6 +14,7 @@
             ui (om/observe owner (ui))
             visible (:buffers-visible ui)]
         (dom/div #js {:className "buffers"}
-          (dom/h4 nil "Recordings")
+          (dom/h2 #js {:className "heading"
+                       :onClick #(send!! owner :toggle-buffers)} "Recordings")
           (apply dom/div #js {:style #js {:display (if visible "block" "none")}}
             (map #(om/build audio-buffer-view %) snds)))))))

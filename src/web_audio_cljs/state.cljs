@@ -94,7 +94,8 @@
    :name sound-name
    :audio-buffer audio-buffer
    :current-offset 0
-   :current-note-type "Quarter"})
+   :current-note-type "Quarter"
+   :editing-name false})
 
 (defn make-new-sample [sound]
   {:id (uuid/make-random)
@@ -181,7 +182,9 @@
     (match [action-vec]
       [[:toggle-recording sound-name]] (handle-toggle-recording app-state sound-name)
       [[:set-sound-note-type sound note-type]] (handle-update-sound-note-type sound note-type)
+      [[:toggle-sound-name-edit sound]] (om/transact! sound #(assoc % :editing-name (not (:editing-name %))))
       [[:set-sound-offset sound x-offset]] (om/transact! sound #(assoc % :current-offset x-offset))
+      [[:set-sound-name sound new-name]] (om/transact! sound #(assoc % :name new-name))
       [[:new-sample sound]] (om/transact! (samples) #(conj % (make-new-sample sound)))
       [[:make-new-track]]  (om/transact! (tracks) #(conj % (make-new-track)))
       [[:set-track-name track track-name]] (om/transact! track #(assoc % :name track-name))

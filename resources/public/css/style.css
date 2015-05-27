@@ -4,194 +4,6 @@
   box-sizing: border-box
 }
 
-body {
-  padding: 10px;
-  margin: 0 auto;
-  max-width: 2048px;
-
-  font-family: "Montserrat", sans-serif;
-  font-size: 18px;
-  line-height: 1.6;
-
-  color: blanchedalmond;
-  background: mediumslateblue;
-}
-
-.top-bar {
-  min-width: 900px;
-}
-
-.top-bar:after {
-  content: "";
-  display: table;
-  clear: both;
-}
-
-.top-bar .left-top {
-  float: left;
-}
-
-.left-top h1 {
-  display: inline-block;
-  margin: 5px 0 0 20px;
-  vertical-align: top;
-}
-
-.top-bar .vis {
-  display: inline-block;
-  margin-left: 15%;
-}
-
-.bars-chart {
-  display: inline-block;
-}
-
-.recording {
-  display: inline-block;
-  position: relative;
-}
-.recording img {
-  position: relative;
-  top: -20px;
-  left: 40px;
-}
-.recording img:hover {
-  cursor: pointer;
-}
-
-.recording span {
-  position: absolute;
-  top: 24px;
-  left: 37px;
-}
-.recording canvas {
-  position: absolute;
-  top: -50px;
-  left: 10px;
-}
-
-.middle-container:after {
-  content: "";
-  display: table;
-  clear: both;
-}
-
-.left-bar {
-  width: 30%;
-  min-width: 412px;
-  float: left;
-  display: inline-block;
-}
-
-.buffers {
-  border: 1px solid;
-}
-
-.heading {
-  text-align: center;
-  margin: 0;
-  font-size: 14px;
-}
-.heading:hover {
-  cursor: pointer;
-  background-color: rgb(210, 77, 219);
-}
-
-.buffer {
-  position: relative;
-  border-top: 1px solid;
-}
-
-.buffer-name {
-  margin: 0;
-  font-size: 12px;
-}
-.buffer-top-section {
-  padding-left: 4px;
-}
-.buffer-top-section:after {
-  display: table;
-  content: "";
-  clear: both;
-}
-
-.button-container {
-  display: inline-block;
-  position: absolute;
-  right: 0;
-  top: 5px;
-}
-
-.button-container:after {
-  display: table;
-  content: "";
-  clear: both;
-}
-.wave-container {
-  position: relative;
-  width: 98%;
-  margin: 0 auto;
-  bottom: -4px;
-  padding-bottom: 4px;
-}
-
-.samples {
-  border: 1px solid #eee;
-}
-
-
-.tracks-container {
-  display: inline-block;
-}
-
-.samples {
-  display: flex;
-  flex-flow: row wrap;
-  justify-content: flex-start;
-  float: left;
-}
-
-.sample {
-  position: relative;
-  margin: 8px;
-  display: flex;
-  justify-content: center;
-  flex-direction: column;
-}
-
-.sample .name {
-  line-height: 1em;
-  margin: 0;
-  padding: 0;
-  word-wrap: break-word;
-  font-family: Raleway, sans-serif;
-  font-size: 1em;
-  font-weight: 700;
-}
-.sample .note-type {
-  position: absolute;
-  top: -20px;
-  right: 10px;
-  color: mediumaquamarine;
-}
-
-.track .container {
-  height: 40px;
-  position: relative;
-}
-.track-sample {
-  position: absolute;
-}
-.track-sample:hover {
-  cursor: pointer;
-}
-.play-head {
-  position: absolute;
-  width: 2px;
-  background: mediumspringgreen;
-  z-index: 999;
-}
-
 /*******************************************************************************
 * Button Styles.
 *******************************************************************************/
@@ -1682,4 +1494,264 @@ body {
   background: #3f51b5;
   border-color: #3f51b5;
   color: #fff;
+}
+
+/*******************************************************************************
+* End Button Styles.
+*******************************************************************************/
+
+body {
+  padding: 10px;
+  margin: 0 auto;
+  max-width: 2048px;
+
+  font-family: "Montserrat", sans-serif;
+  font-size: 18px;
+  line-height: 1.6;
+
+  color: blanchedalmond;
+  background: mediumslateblue;
+}
+
+.top-bar {
+  min-width: 900px;
+}
+
+.top-bar:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+.top-bar .left-top {
+  float: left;
+}
+
+.left-top h1 {
+  display: inline-block;
+  margin: 5px 0 0 20px;
+  vertical-align: top;
+}
+
+.top-bar .vis {
+  display: inline-block;
+  margin-left: 15%;
+}
+
+.bars-chart {
+  display: inline-block;
+}
+
+.recording {
+  display: inline-block;
+  position: relative;
+}
+.recording img {
+  position: relative;
+  top: -20px;
+  left: 40px;
+}
+.recording img:hover {
+  cursor: pointer;
+}
+
+.recording span {
+  position: absolute;
+  top: 24px;
+  left: 37px;
+}
+.recording canvas {
+  position: absolute;
+  top: -50px;
+  left: 10px;
+}
+
+.middle-container:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+.left-bar {
+  width: 410px;
+  float: left;
+  display: inline-block;
+}
+/******************* Buffers **************************************************/
+
+.buffers {
+  width: 426px;
+  max-height: 500px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.buffers-list-wrapper {
+  overflow: hidden;
+  border: 1px solid;
+  margin-bottom: 1em;
+}
+.scroll-bar {
+  height: 100%;
+  width: 1px;
+  background: black;
+}
+.heading {
+  position: relative;
+  text-align: center;
+  margin: 0;
+  font-size: 14px;
+  border-bottom: 1px solid;
+}
+.heading.collapsed {
+  border-bottom: none;
+}
+.heading:hover {
+  cursor: pointer;
+  background-color: rgb(210, 77, 219);
+}
+.buffer {
+  position: relative;
+  border-bottom: 1px solid;
+}
+.buffer:last-child {
+  position: relative;
+  border-bottom: none;
+}
+.buffer-name {
+  margin: 0;
+  font-size: 12px;
+}
+.buffer-top-section {
+  padding-left: 4px;
+}
+.buffer-top-section:after {
+  display: table;
+  content: "";
+  clear: both;
+}
+
+.buffer-make-sample-button {
+  margin-top: 2px;
+  margin-right: 50px
+}
+
+/****************************End buffers.**************************************/
+
+.img-wrapper {
+  float: left;
+  position: absolute;
+  right: -5px;
+}
+
+.img-button {
+  border-radius: 20px;
+}
+
+.img-button:hover {
+  cursor: pointer;
+  box-shadow: inset 3px 5px 4px 4px rgba(87,87,87,0.8);
+}
+.img-button.pressed {
+  box-shadow: inset 3px 5px  11px 2px rgb(71, 71, 71),
+              inset -3px 5px 11px 2px rgb(71, 71, 71);
+}
+
+.button-container {
+  display: inline-block;
+  position: absolute;
+  right: 30px;
+  top: 6px;
+}
+
+.button-container:after {
+  display: table;
+  content: "";
+  clear: both;
+}
+.wave-container {
+  position: relative;
+  width: 98%;
+  margin: 0 auto;
+  bottom: -4px;
+  padding-bottom: 4px;
+}
+
+.samples {
+  border: 1px solid #eee;
+}
+
+
+.tracks-container {
+  display: inline-block;
+  padding: 0 20px;
+}
+
+.samples {
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: flex-start;
+  float: left;
+}
+
+.sample {
+  position: relative;
+  margin: 8px;
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.sample .name {
+  line-height: 1em;
+  margin: 0;
+  padding: 0;
+  word-wrap: break-word;
+  font-family: Raleway, sans-serif;
+  font-size: 1em;
+  font-weight: 700;
+}
+.sample .note-type {
+  position: absolute;
+  top: -20px;
+  right: 10px;
+  color: mediumaquamarine;
+}
+
+.track .container {
+  height: 40px;
+  position: relative;
+}
+.track-sample {
+  position: absolute;
+}
+.track-sample:hover {
+  cursor: pointer;
+}
+.play-head {
+  position: absolute;
+  width: 2px;
+  background: mediumspringgreen;
+  z-index: 999;
+}
+
+.arrow-position {
+  position: absolute;
+  top: 7px;
+  right: 4px;
+}
+.down-arrow {
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-top: 10px solid;
+}
+
+.up-arrow {
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-bottom: 10px solid;
+  top: 6px;
 }

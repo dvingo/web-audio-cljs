@@ -56,16 +56,18 @@
             canvas-context (.getContext canvas "2d")
             mouse-move-chan (listen js/document (.-MOUSEMOVE EventType)
                                     (comp (filter #(:mouse-down (om/get-state owner)))
-                                          (map #(rel-mouse-pos % (om/get-state owner)))))
+                                          (map #(rel-mouse-pos % (om/get-state owner)))
+                                          (map (fn [[new-x mouse-x _ old-y]]
+                                             (let [{:keys [canvas-width]} (om/get-state owner)]
+                                               [(.clamp goog.math new-x 0 (- wave-width canvas-width))
+                                                mouse-x _ old-y])))))
             mouse-up-chan (listen js/document (.-MOUSEUP EventType))]
         (go-loop []
           (alt!
             mouse-move-chan
             ([[new-x mouse-down-x _ old-y]]
-             (let [canvas-width (:canvas-width (om/get-state owner))
-                   clamp-x (.clamp goog.math new-x 0 (- wave-width canvas-width))]
-               (send! owner :set-sound-offset sound clamp-x)
-               (om/update-state! owner #(assoc % :x-offset clamp-x :mouse-down-pos [mouse-down-x old-y]))))
+              (send! owner :set-sound-offset sound new-x)
+              (om/update-state! owner #(assoc % :x-offset new-x :mouse-down-pos [mouse-down-x old-y])))
             mouse-up-chan
             ([_] (om/set-state! owner :mouse-down false)))
           (recur))

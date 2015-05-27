@@ -3,7 +3,7 @@
             [om.dom :as dom :include-macros true]
             [clojure.string :as string]
             [web-audio-cljs.utils :refer [max-of-array min-of-array get-time-domain-data-with-bars
-                                          clear-canvas!]]))
+                                          clear-canvas! lin-interp]]))
 
 (defn draw-line-on-canvas!
   [canvas-context canvas-height i spacing num-bars bar-width magnitude]
@@ -16,10 +16,12 @@
   (clear-canvas! canvas-context canvas-width canvas-height "#000000")
   (doseq [i (range num-bars)]
     (let [offset (.floor js/Math (* i multiplier))
-          magnitude (/ (reduce #(+ (aget freq-byte-data (+ offset %2)) %1) (range multiplier))
-                       multiplier)]
+          max-val (max-of-array freq-byte-data)
+          h-scale (lin-interp 0 max-val 0 canvas-height)
+          magnitude (h-scale (/ (reduce #(+ (aget freq-byte-data (+ offset %2)) %1)
+                               (range multiplier))
+                       multiplier))]
       (draw-line-on-canvas! canvas-context canvas-height i spacing num-bars bar-width magnitude))))
-
 
 (defn chart-view [{:keys [analyser-node] :as data} owner]
   (reify

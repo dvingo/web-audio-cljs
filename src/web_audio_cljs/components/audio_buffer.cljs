@@ -7,7 +7,7 @@
                                           recording-duration-sec play-buffer!]]
             [web-audio-cljs.utils :refer [l min-arr-val max-arr-val
                                           lin-interp]])
-  (:require-macros [web-audio-cljs.macros :refer [send!! build-button]]))
+  (:require-macros [web-audio-cljs.macros :refer [send!! build-img-button build-button]]))
 
 (defn draw-buffer! [width height canvas-context data]
   (let [step (.ceil js/Math (/ (.-length data) width))
@@ -39,7 +39,8 @@
     om/IInitState
     (init-state [_] {:canvas nil
                      :canvas-context nil
-                     :current-note-type :quarter})
+                     :current-note-type :quarter
+                     :highlight-name false})
     om/IDidMount
     (did-mount [_]
       (let [sound-name (:name sound)
@@ -48,7 +49,7 @@
         (draw-buffer! wave-width wave-height canvas-context (:audio-buffer sound))))
 
     om/IRenderState
-    (render-state [_ {:keys [current-note-type]}]
+    (render-state [_ {:keys [current-note-type highlight-name]}]
       (let [audio-buffer (:audio-buffer sound)
             selector-width (get note-type->width (:current-note-type sound))
             selector-offset (:current-offset sound)
@@ -59,15 +60,28 @@
       (dom/div #js {:className "buffer"}
 
         (dom/div #js {:className "buffer-top-section"}
-        (dom/div nil
-          (dom/h3 #js {:className "buffer-name"} (:name sound))
-          (om/build note-type-view sound))
+          (dom/div nil
+            (if (:editing-name sound)
+              (dom/div nil
+                (dom/input #js {:className "buffer-name-input"
+                               :onChange #(send!! owner :set-sound-name sound (.. % -target -value))
+                               :onKeyPress #(when (= (.-key %) "Enter")
+                                              (om/set-state! owner :highlight-name false)
+                                              (send!! owner :toggle-sound-name-edit sound))
+                                :value (:name sound)} nil))
+              (dom/h3 #js {:className "buffer-name"
+                           :style #js {:text-decoration (if highlight-name "underline" "none")}
+                           :onMouseOver #(om/set-state! owner :highlight-name true)
+                           :onMouseOut #(om/set-state! owner :highlight-name false)
+                           :onDoubleClick #(send!! owner :toggle-sound-name-edit sound)} (:name sound)))
+            (om/build note-type-view sound))
 
-        (dom/div #js {:className "button-container"}
-          (build-button "make-sample-button"
-            #(send!! owner :new-sample sound) "Make Sample")
-          (build-button "play-audio-buffer-view"
-            #(play-buffer! audio-context audio-buffer play-offset play-duration) "Play")))
+          (dom/div #js {:className "button-container"}
+            (build-button "make-sample-button"
+              #(send!! owner :new-sample sound) "Make Sample" "buffer-make-sample-button")
+
+            (build-img-button "play-audio-buffer-view"
+              #(play-buffer! audio-context audio-buffer play-offset play-duration) "images/play_button2.svg" 40 40)))
 
         (dom/div #js {:className "wave-container"}
           (dom/canvas #js {:width  wave-width

@@ -53,6 +53,11 @@ A mic image by
 - Dmitry Baranovskiy
 - https://thenounproject.com/term/microphone/5027/
 
+Play button by
+- https://thenounproject.com/chapmanjw/
+- https://thenounproject.com/term/play/8304/
+
+
 ## Button Styles
 Codrops article "Inspiration for Button Styles and Effects"
 http://tympanus.net/codrops/2015/02/26/inspiration-button-styles-effects/

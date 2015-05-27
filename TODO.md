@@ -1,8 +1,2 @@
 # TODO
-- Make div representing a track.
-- Then drag samples to a track.
-- Then rearrange tracks.
-- Add collision detection to samples in a track to move them apart.
-- Then play button for all tracks. - use metronome code.
-- Add play head to view playback.
-- Then add saving state to index db.
+- for the offset - trying using the number that is a sixteenth note for the look ahead time.

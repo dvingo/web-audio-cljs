@@ -43,9 +43,9 @@
                        :borderRadius (/ sample-width 10)}
                       :onClick #(send!! owner :add-sample-to-track sample)}
                  (dom/p #js {:className "name"} (:name sample))
-                 (apply dom/svg #js {:viewBox "0 0 1 1" :width "20"
-                                     :style #js {:position "absolute" :top "4px"
-                                                 :right "4px" :padding "4px"}}
+                 (apply dom/svg #js {:viewBox "0 0 1 1" :width "25"
+                                     :style #js {:position "absolute" :top "2px"
+                                                 :right "2px" :padding "4px"}}
                         (if (= note-type "Whole")
                           [(dom/circle #js {:cx ".5" :cy ".5" :r circle-radius
                                             :strokeWidth stroke-width :stroke stroke-color :fill fill-color})]

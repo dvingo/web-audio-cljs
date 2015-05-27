@@ -5,7 +5,7 @@
             [web-audio-cljs.state :refer [recording-duration bpm]]
             [web-audio-cljs.utils :refer [get-time-domain-data
                                           max-of-array min-of-array
-                                          clear-canvas!]])
+                                          clear-canvas! classes]])
   (:require-macros [cljs.core.async.macros :refer [go]]
                    [web-audio-cljs.macros :refer [send!]]))
 
@@ -62,11 +62,12 @@
 
         (dom/img #js {:src "images/mic.svg" :width 40 :height 40
                       :alt "Record"
+                      :className (classes (when (pos? time-left) "active"))
                       :onClick #(when-not is-recording
-                                     (om/set-state! owner :start-time (.now js/Date))
-                                     (go (send! owner :toggle-recording sound-name)
-                                         (<! (timeout (recording-duration)))
-                                         (send! owner :toggle-recording sound-name)))}
+                                  (om/set-state! owner :start-time (.now js/Date))
+                                  (go (send! owner :toggle-recording sound-name)
+                                      (<! (timeout (recording-duration)))
+                                      (send! owner :toggle-recording sound-name)))}
           nil)
 
         (when (pos? time-left) (dom/span nil (/ time-left 1000)))))))

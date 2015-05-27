@@ -1515,6 +1515,7 @@ body {
 
 .top-bar {
   min-width: 900px;
+  margin-bottom: 20px;
 }
 
 .top-bar:after {
@@ -1550,9 +1551,21 @@ body {
   position: relative;
   top: -20px;
   left: 40px;
+  border-radius: 20px;
 }
+
 .recording img:hover {
   cursor: pointer;
+  box-shadow: inset 3px 5px 4px 4px rgba(87,87,87,0.8);
+}
+.recording img:active {
+  cursor: pointer;
+  box-shadow: inset 3px 5px  11px 2px rgb(71, 71, 71),
+              inset -3px 5px 11px 2px rgb(71, 71, 71);
+}
+.recording img.active {
+  cursor: auto;
+  box-shadow: none;
 }
 
 .recording span {
@@ -1573,21 +1586,22 @@ body {
 }
 
 .left-bar {
-  width: 410px;
+  width: 415px;
   float: left;
   display: inline-block;
 }
 /******************* Buffers **************************************************/
 
 .buffers {
-  width: 426px;
+  border: 1px solid;
+  width: 430px;
+  border-top: none;
   max-height: 500px;
   overflow-y: auto;
   overflow-x: hidden;
 }
 .buffers-list-wrapper {
   overflow: hidden;
-  border: 1px solid;
   margin-bottom: 1em;
 }
 .scroll-bar {
@@ -1600,14 +1614,12 @@ body {
   text-align: center;
   margin: 0;
   font-size: 14px;
-  border-bottom: 1px solid;
-}
-.heading.collapsed {
-  border-bottom: none;
+  border: 1px solid;
+  background: darkslateblue;
 }
 .heading:hover {
   cursor: pointer;
-  background-color: rgb(210, 77, 219);
+  background-color: slateblue;
 }
 .buffer {
   position: relative;
@@ -1676,11 +1688,6 @@ body {
   padding-bottom: 4px;
 }
 
-.samples {
-  border: 1px solid #eee;
-}
-
-
 .tracks-container {
   display: inline-block;
   padding: 0 20px;
@@ -1691,6 +1698,7 @@ body {
   flex-flow: row wrap;
   justify-content: flex-start;
   float: left;
+  border: 1px solid #eee;
 }
 
 .sample {

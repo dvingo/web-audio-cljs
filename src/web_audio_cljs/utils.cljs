@@ -79,3 +79,6 @@
       (.fillRect canvas-context 0 0 canvas-width canvas-height)
       (set! (.-fillStyle canvas-context) "#F6D565")
       (set! (.-lineCap canvas-context) "round"))))
+
+(defn classes [& args]
+  (string/join " " args))

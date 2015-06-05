@@ -22,7 +22,8 @@
         (when (> (count snds) 0)
           (dom/div #js {:className "buffers-list-wrapper"}
             (dom/div #js {:className "scroll-bar"} nil)
-            (dom/h2 #js {:className "heading" :onClick #(send!! owner :toggle-buffers)}
+            (dom/h2 #js {:className (classes (if-not visible "collapsed") "heading")
+                         :onClick #(send!! owner :toggle-buffers)}
               (dom/div #js {:className (classes (if visible "down-arrow" "up-arrow") "arrow-position")})
               "Recordings")
 

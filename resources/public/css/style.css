@@ -1592,17 +1592,17 @@ body {
 }
 /******************* Buffers **************************************************/
 
-.buffers {
+.buffers-list-wrapper {
+  overflow: hidden;
+  margin-bottom: 1em;
   border: 1px solid;
-  width: 415px;
+}
+.buffers {
+  width: 430px;
   border-top: none;
   max-height: 500px;
   overflow-y: auto;
   overflow-x: hidden;
-}
-.buffers-list-wrapper {
-  overflow: hidden;
-  margin-bottom: 1em;
 }
 .scroll-bar {
   height: 100%;
@@ -1614,8 +1614,11 @@ body {
   text-align: center;
   margin: 0;
   font-size: 14px;
-  border: 1px solid;
+  border-bottom: 1px solid;
   background: darkslateblue;
+}
+.heading.collapsed {
+  border-bottom: none;
 }
 .heading:hover {
   cursor: pointer;

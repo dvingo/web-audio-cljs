@@ -9,8 +9,6 @@
   `(cljs.core.async/>! (:action-chan (om.core/get-shared ~owner))
      [~action ~@data]))
 
-
-
 (defmacro build-button
   ([disp-name on-click label]
   `(om.core/build

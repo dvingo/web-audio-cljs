@@ -26,5 +26,6 @@
               (dom/div #js {:className (classes (if visible "down-arrow" "up-arrow") "arrow-position")})
               "Recordings")
 
-            (apply dom/div #js {:className "buffers" :style #js {:display (if visible "block" "none")}}
+            (apply dom/div #js {:className "buffers"
+                                :style #js {:display (if visible "block" "none")}}
               (map #(om/build audio-buffer-view %) snds))))))))

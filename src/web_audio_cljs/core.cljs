@@ -2,7 +2,7 @@
   (:require [cljs.core.async :refer [chan]]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
-            [web-audio-cljs.state :refer [start-actions-handler app-state audio-context]]
+            [web-audio-cljs.state :refer [app-state audio-context]]
             [web-audio-cljs.utils :refer [set-prop-if-undefined!]]
             [web-audio-cljs.components.main :refer [main-view]]))
 

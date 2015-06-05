@@ -1594,7 +1594,7 @@ body {
 
 .buffers {
   border: 1px solid;
-  width: 430px;
+  width: 415px;
   border-top: none;
   max-height: 500px;
   overflow-y: auto;
